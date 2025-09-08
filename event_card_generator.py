@@ -1,5 +1,6 @@
 # import json
 import requests
+from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from pathlib import Path
@@ -10,13 +11,14 @@ IMAGE_FOLDER = BASE_DIR.joinpath("images")
 # 🔹 Card size (based on your samples, WhatsApp shared images ~1080x1350)
 CARD_WIDTH, CARD_HEIGHT = 1080, 1350
 
-# 🔹 Fonts (adjust paths depending on your system)
+# 🔹 Fonts (system dependent — adapt paths if needed)
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 # Create images folder if it doesn't exist
 if not IMAGE_FOLDER.exists():
     IMAGE_FOLDER.mkdir(parents=True, exist_ok=True)
+
 
 def create_event_card(event: dict[str, str], output_path: str):
     """
@@ -37,24 +39,27 @@ def create_event_card(event: dict[str, str], output_path: str):
 
     # --- Blue/Green banner with date ---
     banner_h = 80
-    banner_color = (0, 180, 255) if "VENDREDI" in event["date"] else (100, 255, 100)
+    banner_color = (0, 180, 255) if "VENDREDI" in event["date"].upper() else (100, 255, 100)
     draw.rectangle([0, int(CARD_HEIGHT * 0.45), CARD_WIDTH, int(CARD_HEIGHT * 0.45) + banner_h], fill=banner_color)
 
     font_banner = ImageFont.truetype(FONT_BOLD, 50)
-    bbox = draw.textbbox((0, 0), event["date"], font=font_banner)
-    w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    draw.text(((CARD_WIDTH - w) // 2, int(CARD_HEIGHT * 0.45) + (banner_h - h) // 2),
-              event["date"], font=font_banner, fill="black")
+    with Pilmoji(card) as pilmoji:
+        bbox = draw.textbbox((0, 0), event["date"], font=font_banner)
+        w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        pilmoji.text(((CARD_WIDTH - w) // 2, int(CARD_HEIGHT * 0.45) + (banner_h - h) // 2),
+                     event["date"], font=font_banner, fill="black")
 
     # --- Subtitle ---
     font_sub = ImageFont.truetype(FONT_BOLD, 45)
-    draw.text((50, int(CARD_HEIGHT * 0.45) + banner_h + 40),
-              event["subtitle"], font=font_sub, fill="black")
+    with Pilmoji(card) as pilmoji:
+        pilmoji.text((50, int(CARD_HEIGHT * 0.45) + banner_h + 40),
+                     event["subtitle"], font=font_sub, fill="black")
 
     # --- Title ---
     font_title = ImageFont.truetype(FONT_BOLD, 60)
-    draw.text((50, int(CARD_HEIGHT * 0.45) + banner_h + 120),
-              event["title"], font=font_title, fill="black")
+    with Pilmoji(card) as pilmoji:
+        pilmoji.text((50, int(CARD_HEIGHT * 0.45) + banner_h + 120),
+                     event["title"], font=font_title, fill="black")
 
     # --- Description ---
     font_desc = ImageFont.truetype(FONT_REGULAR, 38)
@@ -76,17 +81,20 @@ def create_event_card(event: dict[str, str], output_path: str):
             line = word
     lines.append(line)
 
-    for l in lines:
-        draw.text((50, desc_y), l.strip(), font=font_desc, fill="black")
-        desc_y += 50
+    with Pilmoji(card) as pilmoji:
+        for l in lines:
+            pilmoji.text((50, desc_y), l.strip(), font=font_desc, fill="black")
+            desc_y += 50
 
     # --- Free Event indicator ---
     font_free = ImageFont.truetype(FONT_REGULAR, 40)
-    draw.text((50, desc_y + 30), "📅 Événement Gratuit", font=font_free, fill="black")
+    with Pilmoji(card) as pilmoji:
+        pilmoji.text((50, desc_y + 30), "📅 Événement Gratuit", font=font_free, fill="black")
 
     # --- Location ---
     font_loc = ImageFont.truetype(FONT_REGULAR, 40)
-    draw.text((50, desc_y + 100), event["location"], font=font_loc, fill="black")
+    with Pilmoji(card) as pilmoji:
+        pilmoji.text((50, desc_y + 100), event["location"], font=font_loc, fill="black")
 
     # --- Save output ---
     card.save(output_path, quality=95)
