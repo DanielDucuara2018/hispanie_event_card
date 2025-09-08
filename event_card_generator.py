@@ -34,36 +34,69 @@ def create_event_card(event: dict[str, str], output_path: str):
         img = Image.open(BytesIO(response.content)).convert("RGB")
     else:
         img = Image.open(event["image"]).convert("RGB")
-    img = img.resize((CARD_WIDTH, int(CARD_HEIGHT * 0.45)))
-    card.paste(img, (0, 0))
+
+    # Resize image proportionally to fit the top half of the card
+    img_width, img_height = img.size
+    max_width, max_height = CARD_WIDTH, int(CARD_HEIGHT * 0.45)
+    aspect_ratio = img_width / img_height
+
+    if img_width > max_width or img_height > max_height:
+        if img_width / max_width > img_height / max_height:
+            new_width = max_width
+            new_height = int(new_width / aspect_ratio)
+        else:
+            new_height = max_height
+            new_width = int(new_height * aspect_ratio)
+        img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+    # Center the image horizontally
+    img_x = (CARD_WIDTH - img.width) // 2
+    card.paste(img, (img_x, 0))
 
     # --- Blue/Green banner with date ---
     banner_h = 80
-    banner_color = (0, 180, 255) if "VENDREDI" in event["date"].upper() else (100, 255, 100)
-    draw.rectangle([0, int(CARD_HEIGHT * 0.45), CARD_WIDTH, int(CARD_HEIGHT * 0.45) + banner_h], fill=banner_color)
+    banner_color = (
+        (0, 180, 255) if "VENDREDI" in event["date"].upper() else (100, 255, 100)
+    )
+    draw.rectangle(
+        [0, int(CARD_HEIGHT * 0.45), CARD_WIDTH, int(CARD_HEIGHT * 0.45) + banner_h],
+        fill=banner_color,
+    )
 
     font_banner = ImageFont.truetype(FONT_BOLD, 50)
     with Pilmoji(card) as pilmoji:
         bbox = draw.textbbox((0, 0), event["date"], font=font_banner)
         w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        pilmoji.text(((CARD_WIDTH - w) // 2, int(CARD_HEIGHT * 0.45) + (banner_h - h) // 2),
-                     event["date"], font=font_banner, fill="black")
+        pilmoji.text(
+            ((CARD_WIDTH - w) // 2, int(CARD_HEIGHT * 0.45) + (banner_h - h) // 2),
+            event["date"],
+            font=font_banner,
+            fill="black",
+        )
 
     # --- Subtitle ---
-    font_sub = ImageFont.truetype(FONT_BOLD, 45)
+    font_sub = ImageFont.truetype(FONT_BOLD, 35)
     with Pilmoji(card) as pilmoji:
-        pilmoji.text((50, int(CARD_HEIGHT * 0.45) + banner_h + 40),
-                     event["subtitle"], font=font_sub, fill="black")
+        pilmoji.text(
+            (50, int(CARD_HEIGHT * 0.45) + banner_h + 40),
+            event["subtitle"],
+            font=font_sub,
+            fill="black",
+        )
 
     # --- Title ---
-    font_title = ImageFont.truetype(FONT_BOLD, 60)
+    font_title = ImageFont.truetype(FONT_BOLD, 45)
     with Pilmoji(card) as pilmoji:
-        pilmoji.text((50, int(CARD_HEIGHT * 0.45) + banner_h + 120),
-                     event["title"], font=font_title, fill="black")
+        pilmoji.text(
+            (50, int(CARD_HEIGHT * 0.45) + banner_h + 120),
+            event["title"],
+            font=font_title,
+            fill="black",
+        )
 
     # --- Description ---
-    font_desc = ImageFont.truetype(FONT_REGULAR, 38)
-    desc_y = int(CARD_HEIGHT * 0.45) + banner_h + 220
+    font_desc = ImageFont.truetype(FONT_REGULAR, 30)
+    desc_y = int(CARD_HEIGHT * 0.45) + banner_h + 240
     max_width = CARD_WIDTH - 100
     desc_text = event["description"]
 
@@ -82,19 +115,21 @@ def create_event_card(event: dict[str, str], output_path: str):
     lines.append(line)
 
     with Pilmoji(card) as pilmoji:
-        for l in lines:
-            pilmoji.text((50, desc_y), l.strip(), font=font_desc, fill="black")
-            desc_y += 50
+        for line in lines:
+            pilmoji.text((50, desc_y), line.strip(), font=font_desc, fill="black")
+            desc_y += 40
 
     # --- Free Event indicator ---
     font_free = ImageFont.truetype(FONT_REGULAR, 40)
     with Pilmoji(card) as pilmoji:
-        pilmoji.text((50, desc_y + 30), "📅 Événement Gratuit", font=font_free, fill="black")
+        pilmoji.text(
+            (50, desc_y + 70), "📅 Événement Gratuit", font=font_free, fill="black"
+        )
 
     # --- Location ---
     font_loc = ImageFont.truetype(FONT_REGULAR, 40)
     with Pilmoji(card) as pilmoji:
-        pilmoji.text((50, desc_y + 100), event["location"], font=font_loc, fill="black")
+        pilmoji.text((50, desc_y + 140), event["location"], font=font_loc, fill="black")
 
     # --- Save output ---
     card.save(output_path, quality=95)
@@ -109,7 +144,7 @@ if __name__ == "__main__":
         "date": "MERCREDI - 20H À 23H",
         "subtitle": "Soirée Latine 💃",
         "description": "Salsa sur les Quais s’installe le temps d’une soirée sous les Nefs. Un lieu unique, atypique voire magiiiiiiiiiiique ✨✨✨",
-        "location": "📍 Machines de l'île de Nantes"
+        "location": "📍 Machines de l'île de Nantes",
     }
     # event = json.loads(event_json)
     create_event_card(event_json, IMAGE_FOLDER.joinpath("output_event_card.jpg"))
