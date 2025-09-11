@@ -1,4 +1,4 @@
-# import json
+import json
 import requests
 from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
@@ -7,6 +7,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
 IMAGE_FOLDER = BASE_DIR.joinpath("images")
+INPUT_FOLDER = BASE_DIR.joinpath("input")
 
 # 🔹 Card size (based on your samples, WhatsApp shared images ~1080x1350)
 CARD_WIDTH, CARD_HEIGHT = 1080, 1350
@@ -74,12 +75,12 @@ def create_event_card(event: dict[str, str], output_path: str):
             fill="black",
         )
 
-    # --- Subtitle ---
+    # --- Type ---
     font_sub = ImageFont.truetype(FONT_BOLD, 35)
     with Pilmoji(card) as pilmoji:
         pilmoji.text(
             (50, int(CARD_HEIGHT * 0.45) + banner_h + 40),
-            event["subtitle"],
+            event["type"],
             font=font_sub,
             fill="black",
         )
@@ -123,7 +124,7 @@ def create_event_card(event: dict[str, str], output_path: str):
     font_free = ImageFont.truetype(FONT_REGULAR, 40)
     with Pilmoji(card) as pilmoji:
         pilmoji.text(
-            (50, desc_y + 70), "📅 Événement Gratuit", font=font_free, fill="black"
+            (50, desc_y + 70), f"📅 {event['cost']}", font=font_free, fill="black"
         )
 
     # --- Location ---
@@ -137,14 +138,20 @@ def create_event_card(event: dict[str, str], output_path: str):
 
 
 if __name__ == "__main__":
+    """
     # Example JSON input
     event_json = {
         "image": "https://scontent.fcdg4-1.fna.fbcdn.net/v/t39.30808-6/520225612_1287586610043747_9068125171068301630_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=75d36f&_nc_ohc=DY2b9HbJCcgQ7kNvwFAPsuX&_nc_oc=AdmJ8w1FoPtNs3aYuzQK_C4jinHX2lVZSUwsOi9ll9bntxzjhHBUeFNUdnYzydk8HnvjZFQvekVeQVJi9ONJHWu0&_nc_zt=23&_nc_ht=scontent.fcdg4-1.fna&_nc_gid=XvN1_5XMQUlZxsa20agkHA&oh=00_Afa7AwyVbH7v-Cm1Kfb9qI_KnjjjIqQstPfGvCkKeceIrQ&oe=68C377ED",
         "title": "SALSA SUR LES QUAIS",
         "date": "MERCREDI - 20H À 23H",
-        "subtitle": "Soirée Latine 💃",
+        "type": "Soirée Latine 💃",
         "description": "Salsa sur les Quais s’installe le temps d’une soirée sous les Nefs. Un lieu unique, atypique voire magiiiiiiiiiiique ✨✨✨",
         "location": "📍 Machines de l'île de Nantes",
+        "cost": "Événement Gratuit",
     }
-    # event = json.loads(event_json)
-    create_event_card(event_json, IMAGE_FOLDER.joinpath("output_event_card.jpg"))
+    """
+    with INPUT_FOLDER.joinpath("events.json").open("r", encoding="utf-8") as f:
+        events = json.load(f)
+
+    for i, event in enumerate(events):
+        create_event_card(event, IMAGE_FOLDER.joinpath(f"output_event_card_{i}.jpg"))
