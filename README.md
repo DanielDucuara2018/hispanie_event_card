@@ -53,8 +53,14 @@ It is recommended to use a virtual environment to manage dependencies and isolat
      ```
 
 4. Install the required dependencies:
+
    ```bash
    pip install -r requirements.txt
+   ```
+
+5. Install emojis fonts:
+   ```bash
+   sudo apt-get install fonts-noto-color-emoji
    ```
 
 Now your virtual environment is ready, and you can run the script as described in the [Usage](#usage) section.
