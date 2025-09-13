@@ -93,7 +93,7 @@ Now your virtual environment is ready, and you can run the script as described i
 ## Example Output
 
 The generated card will look like this:
-![Example Event Card](./images/output_event_card.jpg)
+![Example Event Card](./hipanie_event_card/images/output_event_card.jpg)
 
 ## License
 

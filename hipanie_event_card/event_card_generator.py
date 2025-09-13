@@ -1,17 +1,7 @@
-import json
 import requests
 from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-from pathlib import Path
-
-BASE_DIR = Path(__file__).parent
-IMAGE_FOLDER = BASE_DIR.joinpath("images")
-INPUT_FOLDER = BASE_DIR.joinpath("input")
-
-# Create images folder if it doesn't exist
-if not IMAGE_FOLDER.exists():
-    IMAGE_FOLDER.mkdir(parents=True, exist_ok=True)
 
 
 class EventCardGenerator:
@@ -52,6 +42,9 @@ class EventCardGenerator:
         self.line_spacing = 45
         self.section_spacing = 80
         self.max_description_lines = 3
+
+        # Data keys
+        self._description_key = "description_short"
 
     def load_and_process_image(self, event: dict[str, str]) -> Image.Image:
         """
@@ -108,7 +101,7 @@ class EventCardGenerator:
         else:
             return (255, 193, 7)  # Yellow/orange
 
-    def draw_inclined_banner(
+    def draw_banner(
         self,
         draw: ImageDraw.Draw,
         banner_start_y: int,
@@ -239,7 +232,9 @@ class EventCardGenerator:
         font_desc = ImageFont.truetype(self.font_regular, self.desc_font_size)
         max_desc_width = self.card_width - self.left_margin - self.right_margin
 
-        lines = self.wrap_text(event["description"], font_desc, max_desc_width, draw)
+        lines = self.wrap_text(
+            event[self._description_key], font_desc, max_desc_width, draw
+        )
 
         with Pilmoji(card) as pilmoji:
             for i, line in enumerate(lines):
@@ -274,7 +269,7 @@ class EventCardGenerator:
                 (self.left_margin, y_position),
                 (self.card_width - self.right_margin, y_position),
             ],
-            fill=(200, 200, 200),
+            fill="black",
             width=2,
         )
         return y_position + 30
@@ -295,7 +290,7 @@ class EventCardGenerator:
 
     def add_event_content(
         self, card: Image.Image, event: dict[str, str], content_start_y: int
-    ):
+    ) -> int:
         """Add all event content to the card."""
         y_pos = content_start_y + 20  # Small padding from banner
 
@@ -304,7 +299,9 @@ class EventCardGenerator:
         y_pos = self.add_event_description(card, event, y_pos)
         y_pos = self.add_event_cost(card, event, y_pos)
         y_pos = self.add_separator_line(card, y_pos)
-        self.add_event_location(card, event, y_pos)
+        y_pos = self.add_event_location(card, event, y_pos)
+
+        return y_pos
 
     def create_event_card(self, event: dict[str, str], output_path: str):
         """
@@ -326,7 +323,7 @@ class EventCardGenerator:
         # Draw inclined banner
         banner_start_y = img.height
         banner_color = self.get_banner_color(event["date"])
-        content_start_y = self.draw_inclined_banner(draw, banner_start_y, banner_color)
+        content_start_y = self.draw_banner(draw, banner_start_y, banner_color)
 
         # Add banner text
         self.add_banner_text(card, event["date"], banner_start_y)
@@ -337,19 +334,3 @@ class EventCardGenerator:
         # Save the card
         card.save(output_path, quality=95)
         print(f"✅ Saved card at {output_path}")
-
-
-if __name__ == "__main__":
-    with INPUT_FOLDER.joinpath("events.json").open("r", encoding="utf-8") as f:
-        events = json.load(f)
-
-    # Generate cards in different sizes
-    image_sizes = [(1080, 1350), (1080, 1920)]
-
-    for i, event in enumerate(events):
-        for width, height in image_sizes:
-            generator = EventCardGenerator(width, height)
-            generator.create_event_card(
-                event,
-                IMAGE_FOLDER.joinpath(f"output_event_card_{i}_{width}x{height}.jpg"),
-            )
