@@ -23,7 +23,7 @@ if not IMAGE_FOLDER.exists():
 
 def load_and_process_image(event: dict[str, str]) -> Image.Image:
     """
-    Load image from URL or file path and crop to show top 3/4 of the image.
+    Load image from URL or file path and crop to show top 3/4 of the image only if height > width.
 
     Args:
         event: Dictionary containing event data with 'image' key
@@ -37,16 +37,23 @@ def load_and_process_image(event: dict[str, str]) -> Image.Image:
     else:
         img = Image.open(event["image"]).convert("RGB")
 
-    # Crop image to show only the top 3/4
+    max_crop_height = 600
     img_width, img_height = img.size
-    cropped_height = 3 * img_height // 4
 
-    # If image is wider than card, also crop horizontally
-    if img_width > CARD_WIDTH:
-        crop_x = (img_width - CARD_WIDTH) // 2
-        img = img.crop((crop_x, 0, crop_x + CARD_WIDTH, cropped_height))
+    # Only crop to 3/4 if height is greater than width
+    if img_height > max_crop_height:
+        cropped_height = max_crop_height
+        # If image is wider than card, also crop horizontally
+        if img_width > CARD_WIDTH:
+            crop_x = (img_width - CARD_WIDTH) // 2
+            img = img.crop((crop_x, 0, crop_x + CARD_WIDTH, cropped_height))
+        else:
+            img = img.crop((0, 0, img_width, cropped_height))
     else:
-        img = img.crop((0, 0, img_width, cropped_height))
+        # Keep original size, only crop horizontally if wider than card
+        if img_width > CARD_WIDTH:
+            crop_x = (img_width - CARD_WIDTH) // 2
+            img = img.crop((crop_x, 0, crop_x + CARD_WIDTH, img_height))
 
     return img
 
