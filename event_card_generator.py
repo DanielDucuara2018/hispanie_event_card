@@ -10,7 +10,7 @@ IMAGE_FOLDER = BASE_DIR.joinpath("images")
 INPUT_FOLDER = BASE_DIR.joinpath("input")
 
 # 🔹 Card size (based on your samples, WhatsApp shared images ~1080x1350)
-CARD_WIDTH, CARD_HEIGHT = 1080, 1350
+IMAGE_SIZES = [(1080, 1350), (1080, 1920)]
 
 # 🔹 Fonts (system dependent — adapt paths if needed)
 FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -21,7 +21,7 @@ if not IMAGE_FOLDER.exists():
     IMAGE_FOLDER.mkdir(parents=True, exist_ok=True)
 
 
-def load_and_process_image(event: dict[str, str]) -> Image.Image:
+def load_and_process_image(event: dict[str, str], width: int) -> Image.Image:
     """
     Load image from URL or file path and crop to show top 3/4 of the image only if height > width.
 
@@ -44,16 +44,16 @@ def load_and_process_image(event: dict[str, str]) -> Image.Image:
     if img_height > max_crop_height:
         cropped_height = max_crop_height
         # If image is wider than card, also crop horizontally
-        if img_width > CARD_WIDTH:
-            crop_x = (img_width - CARD_WIDTH) // 2
-            img = img.crop((crop_x, 0, crop_x + CARD_WIDTH, cropped_height))
+        if img_width > width:
+            crop_x = (img_width - width) // 2
+            img = img.crop((crop_x, 0, crop_x + width, cropped_height))
         else:
             img = img.crop((0, 0, img_width, cropped_height))
     else:
         # Keep original size, only crop horizontally if wider than card
-        if img_width > CARD_WIDTH:
-            crop_x = (img_width - CARD_WIDTH) // 2
-            img = img.crop((crop_x, 0, crop_x + CARD_WIDTH, img_height))
+        if img_width > width:
+            crop_x = (img_width - width) // 2
+            img = img.crop((crop_x, 0, crop_x + width, img_height))
 
     return img
 
@@ -80,7 +80,10 @@ def get_banner_color(date: str) -> tuple[int, int, int]:
 
 
 def draw_inclined_banner(
-    draw: ImageDraw.Draw, banner_start_y: int, banner_color: tuple[int, int, int]
+    draw: ImageDraw.Draw,
+    banner_start_y: int,
+    banner_color: tuple[int, int, int],
+    width: int,
 ) -> int:
     """
     Draw an inclined banner rectangle on the card.
@@ -100,8 +103,8 @@ def draw_inclined_banner(
     # Draw inclined rectangle as polygon
     banner_points = [
         (margin, banner_start_y + angle_offset),  # top-left (lower)
-        (CARD_WIDTH - margin, banner_start_y),  # top-right (higher)
-        (CARD_WIDTH - margin, banner_start_y + banner_height),  # bottom-right
+        (width - margin, banner_start_y),  # top-right (higher)
+        (width - margin, banner_start_y + banner_height),  # bottom-right
         (margin, banner_start_y + banner_height + angle_offset),  # bottom-left (lower)
     ]
 
@@ -110,7 +113,7 @@ def draw_inclined_banner(
     return banner_start_y + banner_height + angle_offset + 30
 
 
-def add_banner_text(card: Image.Image, date: str, banner_start_y: int):
+def add_banner_text(card: Image.Image, date: str, banner_start_y: int, width: int):
     """
     Add centered date/time text to the banner.
 
@@ -127,7 +130,7 @@ def add_banner_text(card: Image.Image, date: str, banner_start_y: int):
     with Pilmoji(card) as pilmoji:
         bbox = draw.textbbox((0, 0), date, font=font_banner)
         text_width = bbox[2] - bbox[0]
-        text_x = (CARD_WIDTH - text_width) // 2
+        text_x = (width - text_width) // 2
         text_y = banner_start_y + (banner_height - 42) // 2 + angle_offset // 2
         pilmoji.text((text_x, text_y), date, font=font_banner, fill="white")
 
@@ -216,7 +219,7 @@ def add_event_title(card: Image.Image, event: dict[str, str], y_position: int) -
 
 
 def add_event_description(
-    card: Image.Image, event: dict[str, str], y_position: int
+    card: Image.Image, event: dict[str, str], y_position: int, width: int
 ) -> int:
     """
     Add wrapped event description to the card.
@@ -233,7 +236,7 @@ def add_event_description(
     left_margin = 40
     right_margin = 40
     font_desc = ImageFont.truetype(FONT_REGULAR, 30)
-    max_desc_width = CARD_WIDTH - left_margin - right_margin
+    max_desc_width = width - left_margin - right_margin
 
     lines = wrap_text(event["description"], font_desc, max_desc_width, draw)
 
@@ -273,7 +276,7 @@ def add_event_cost(card: Image.Image, event: dict[str, str], y_position: int) ->
     return y_position + 50
 
 
-def add_separator_line(card: Image.Image, y_position: int) -> int:
+def add_separator_line(card: Image.Image, y_position: int, width: int) -> int:
     """
     Add a horizontal separator line to the card.
 
@@ -289,7 +292,7 @@ def add_separator_line(card: Image.Image, y_position: int) -> int:
     right_margin = 40
 
     draw.line(
-        [(left_margin, y_position), (CARD_WIDTH - right_margin, y_position)],
+        [(left_margin, y_position), (width - right_margin, y_position)],
         fill=(200, 200, 200),
         width=2,
     )
@@ -322,7 +325,9 @@ def add_event_location(
     return y_position + 50
 
 
-def add_event_content(card: Image.Image, event: dict[str, str], content_start_y: int):
+def add_event_content(
+    card: Image.Image, event: dict[str, str], content_start_y: int, width: int
+):
     """
     Add all event content (type, title, description, cost, location) to the card.
 
@@ -335,13 +340,13 @@ def add_event_content(card: Image.Image, event: dict[str, str], content_start_y:
 
     y_pos = add_event_type(card, event, y_pos)
     y_pos = add_event_title(card, event, y_pos)
-    y_pos = add_event_description(card, event, y_pos)
+    y_pos = add_event_description(card, event, y_pos, width)
     y_pos = add_event_cost(card, event, y_pos)
-    y_pos = add_separator_line(card, y_pos)
+    y_pos = add_separator_line(card, y_pos, width)
     add_event_location(card, event, y_pos)
 
 
-def create_event_card(event: dict[str, str], output_path: str):
+def create_event_card(event: dict[str, str], width: int, height: int, output_path: str):
     """
     Create an event card with standardized design matching reference images.
 
@@ -350,24 +355,24 @@ def create_event_card(event: dict[str, str], output_path: str):
         output_path: Path where the generated card image should be saved
     """
     # Create base card
-    card = Image.new("RGB", (CARD_WIDTH, CARD_HEIGHT), "white")
+    card = Image.new("RGB", (width, height), "white")
     draw = ImageDraw.Draw(card)
 
     # Load and process event image
-    img = load_and_process_image(event)
-    img_x = (CARD_WIDTH - img.width) // 2
+    img = load_and_process_image(event, width)
+    img_x = (width - img.width) // 2
     card.paste(img, (img_x, 0))
 
     # Draw inclined banner
     banner_start_y = img.height
     banner_color = get_banner_color(event["date"])
-    content_start_y = draw_inclined_banner(draw, banner_start_y, banner_color)
+    content_start_y = draw_inclined_banner(draw, banner_start_y, banner_color, width)
 
     # Add banner text
-    add_banner_text(card, event["date"], banner_start_y)
+    add_banner_text(card, event["date"], banner_start_y, width)
 
     # Add event content
-    add_event_content(card, event, content_start_y)
+    add_event_content(card, event, content_start_y, width)
 
     # Save the card
     card.save(output_path, quality=95)
@@ -391,4 +396,11 @@ if __name__ == "__main__":
         events = json.load(f)
 
     for i, event in enumerate(events):
-        create_event_card(event, IMAGE_FOLDER.joinpath(f"output_event_card_{i}.jpg"))
+        for size in IMAGE_SIZES:
+            width, height = size
+            create_event_card(
+                event,
+                width,
+                height,
+                IMAGE_FOLDER.joinpath(f"output_event_card_{i}_{width}x{height}.jpg"),
+            )
