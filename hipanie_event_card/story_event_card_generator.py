@@ -27,6 +27,11 @@ class StoryEventCardGenerator(EventCardGenerator):
         # Design constants
         self.banner_height = 120
 
+        # Gradient configuration - Change this value to control gradient area
+        self.gradient_height_ratio = (
+            0.1  # 30% of card height (change to 1.0 for full card)
+        )
+
         # Spacing
         self.max_description_lines = 20
 
@@ -39,7 +44,10 @@ class StoryEventCardGenerator(EventCardGenerator):
         colors: tuple[tuple[int, int, int], tuple[int, int, int]],
     ):
         """
-        Create a vertical gradient background for story format.
+        Create a vertical gradient background for story format header.
+
+        The gradient is limited to self.gradient_height_ratio of the card height.
+        Set gradient_height_ratio to 1.0 for full card gradient.
 
         Args:
             card: PIL Image object to apply gradient to
@@ -48,10 +56,12 @@ class StoryEventCardGenerator(EventCardGenerator):
         draw = ImageDraw.Draw(card)
         top_color, bottom_color = colors
 
-        y_height = self.card_height
-        for y in range(int(y_height)):
-            # Calculate blend ratio
-            ratio = y / y_height
+        # Calculate gradient area height based on ratio
+        gradient_height = int(self.card_height * self.gradient_height_ratio)
+
+        for y in range(gradient_height):
+            # Calculate blend ratio within the gradient area
+            ratio = y / gradient_height
 
             # Interpolate between colors
             r = int(top_color[0] * (1 - ratio) + bottom_color[0] * ratio)
