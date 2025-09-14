@@ -22,13 +22,13 @@ class StoryEventCardGenerator(EventCardGenerator):
         super().__init__(width, height)
 
         # Override settings for story format
+        self.start_card = 20  # Start lower to accommodate banner
 
         # Design constants
-        self.max_crop_height = 400  # Smaller image for story format
         self.banner_height = 120
 
         # Spacing
-        self.max_description_lines = 10
+        self.max_description_lines = 20
 
         # Data keys
         self._description_key = "description_long"
@@ -48,7 +48,7 @@ class StoryEventCardGenerator(EventCardGenerator):
         draw = ImageDraw.Draw(card)
         top_color, bottom_color = colors
 
-        y_height = self.card_height / 2
+        y_height = self.card_height
         for y in range(int(y_height)):
             # Calculate blend ratio
             ratio = y / y_height
@@ -121,21 +121,21 @@ class StoryEventCardGenerator(EventCardGenerator):
         draw = ImageDraw.Draw(card)
 
         # Draw rectangular banner
-        banner_start_y = 50
-        banner_color = self.get_banner_color(event["date"])
-        content_start_y = self.draw_banner(draw, banner_start_y, banner_color)
+        banner_color = self.get_color(event["date"])
+        content_start_y = self.draw_banner(draw, self.start_card, banner_color)
 
         # Add banner text
-        self.add_banner_text(card, event["date"], banner_start_y)
+        self.add_banner_text(card, event["date"], self.start_card)
 
         # Add story content
         # self.add_story_content(card, event, content_start_y)
-        self.add_event_content(card, event, content_start_y)
+        content_end_y = self.add_event_content(card, event, content_start_y)
 
         # Load and process event image (smaller for story format)
-        # img = self.load_and_process_image(event)
-        # img_x = (self.card_width - img.width) // 2
-        # card.paste(img, (img_x, content_end_y))  # Start with some top margin
+        self.max_crop_height = (self.card_height - 20) - (content_end_y + 20)
+        img = self.load_and_process_image(event)
+        img_x = (self.card_width - img.width) // 2
+        card.paste(img, (img_x, content_end_y + 20))  # Start with some top margin
 
         # Save the card
         card.save(output_path, quality=95)

@@ -17,6 +17,7 @@ class EventCardGenerator:
         """
         self.card_width = width
         self.card_height = height
+        self.start_card = 0
 
         # Design constants
         self.max_crop_height = 600
@@ -39,7 +40,7 @@ class EventCardGenerator:
         self.location_font_size = 30
 
         # Spacing
-        self.line_spacing = 45
+        self.line_spacing = 40
         self.section_spacing = 80
         self.max_description_lines = 3
 
@@ -81,7 +82,7 @@ class EventCardGenerator:
 
         return img
 
-    def get_banner_color(self, date: str) -> tuple[int, int, int]:
+    def get_color(self, date: str) -> tuple[int, int, int]:
         """
         Determine banner color based on the day of the week in the date string.
 
@@ -305,7 +306,9 @@ class EventCardGenerator:
                     fill="black",
                 )
 
-        return y_position + len(lines) * self.line_spacing + self.section_spacing
+        return (
+            y_position + len(lines) * self.line_spacing + int(self.section_spacing / 2)
+        )
 
     def add_event_cost(
         self, card: Image.Image, event: dict[str, str], y_position: int
@@ -378,11 +381,11 @@ class EventCardGenerator:
         # Load and process event image
         img = self.load_and_process_image(event)
         img_x = (self.card_width - img.width) // 2
-        card.paste(img, (img_x, 0))
+        card.paste(img, (img_x, self.start_card))
 
         # Draw inclined banner
         banner_start_y = img.height
-        banner_color = self.get_banner_color(event["date"])
+        banner_color = self.get_color(event["date"])
         content_start_y = self.draw_banner(draw, banner_start_y, banner_color)
 
         # Add banner text
