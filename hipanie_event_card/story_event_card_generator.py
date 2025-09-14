@@ -28,9 +28,8 @@ class StoryEventCardGenerator(EventCardGenerator):
         self.banner_height = 120
 
         # Gradient configuration - Change this value to control gradient area
-        self.gradient_height_ratio = (
-            0.1  # 30% of card height (change to 1.0 for full card)
-        )
+        # 30% of card height (change to 1.0 for full card)
+        self.gradient_height_ratio = 0.2
 
         # Spacing
         self.max_description_lines = 20
@@ -75,24 +74,26 @@ class StoryEventCardGenerator(EventCardGenerator):
     ) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
         """
         Get gradient colors based on the day for story format.
+        The gradient will blend from the day color to white (background color).
 
         Args:
             date: Date string containing day information
 
         Returns:
-            Tuple of two RGB color tuples for gradient
+            Tuple of two RGB color tuples for gradient (top_color, white)
         """
         day = date.upper()
+
         if "VENDREDI" in day or "VIERNES" in day or "FRIDAY" in day:
-            return ((67, 160, 71), (200, 255, 200))  # Green gradient
+            return ((67, 160, 71), self.background_color)  # Green to white
         elif "JEUDI" in day or "JUEVES" in day or "THURSDAY" in day:
-            return ((66, 165, 245), (200, 230, 255))  # Blue gradient
+            return ((66, 165, 245), self.background_color)  # Blue to white
         elif "MERCREDI" in day or "MIERCOLES" in day or "WEDNESDAY" in day:
-            return ((102, 187, 106), (220, 255, 220))  # Light green gradient
+            return ((102, 187, 106), self.background_color)  # Light green to white
         elif "SABADO" in day or "SAMEDI" in day or "SATURDAY" in day:
-            return ((255, 87, 87), (255, 200, 200))  # Red gradient
+            return ((255, 87, 87), self.background_color)  # Red to white
         else:
-            return ((255, 193, 7), (255, 240, 200))  # Yellow/orange gradient
+            return ((255, 193, 7), self.background_color)  # Yellow/orange to white
 
     def add_banner_text(self, card: Image.Image, date: str, banner_start_y: int):
         """
@@ -111,7 +112,9 @@ class StoryEventCardGenerator(EventCardGenerator):
             text_width = bbox[2] - bbox[0]
             text_x = (self.card_width - text_width) // 2
             text_y = banner_start_y + (self.banner_height - self.banner_font_size) // 2
-            pilmoji.text((text_x, text_y), date, font=font_banner, fill="white")
+            pilmoji.text(
+                (text_x, text_y), date, font=font_banner, fill=self.background_color
+            )
 
     def create_event_card(self, event: dict[str, str], output_path: str):
         """
@@ -122,7 +125,9 @@ class StoryEventCardGenerator(EventCardGenerator):
             output_path: Path where the generated card image should be saved
         """
         # Create base card with white background
-        card = Image.new("RGB", (self.card_width, self.card_height), "white")
+        card = Image.new(
+            "RGB", (self.card_width, self.card_height), self.background_color
+        )
 
         # Create gradient background
         gradient_colors = self.get_gradient_colors(event["date"])

@@ -18,6 +18,7 @@ class EventCardGenerator:
         self.card_width = width
         self.card_height = height
         self.start_card = 0
+        self.background_color = (255, 255, 255)  # White
 
         # Design constants
         self.max_crop_height = 600
@@ -157,7 +158,9 @@ class EventCardGenerator:
                 + (self.banner_height - self.banner_font_size) // 2
                 + self.angle_offset // 2
             )
-            pilmoji.text((text_x, text_y), date, font=font_banner, fill="white")
+            pilmoji.text(
+                (text_x, text_y), date, font=font_banner, fill=self.background_color
+            )
 
     def _wrap_paragraph(
         self,
@@ -375,7 +378,9 @@ class EventCardGenerator:
             output_path: Path where the generated card image should be saved
         """
         # Create base card
-        card = Image.new("RGB", (self.card_width, self.card_height), "white")
+        card = Image.new(
+            "RGB", (self.card_width, self.card_height), self.background_color
+        )
         draw = ImageDraw.Draw(card)
 
         # Load and process event image
