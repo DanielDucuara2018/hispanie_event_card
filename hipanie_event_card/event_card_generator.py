@@ -158,27 +158,27 @@ class EventCardGenerator:
             )
             pilmoji.text((text_x, text_y), date, font=font_banner, fill="white")
 
-    def wrap_text(
+    def _wrap_paragraph(
         self,
-        text: str,
+        paragraph: str,
         font: ImageFont.FreeTypeFont,
         max_width: int,
         draw: ImageDraw.Draw,
     ) -> list[str]:
         """
-        Wrap text to fit within specified width, limiting to max lines.
+        Wrap a single paragraph to fit within specified width.
 
         Args:
-            text: Text to wrap
+            paragraph: Single paragraph text to wrap
             font: Font to use for text measurement
             max_width: Maximum width in pixels
             draw: ImageDraw object for text measurement
 
         Returns:
-            List of text lines that fit within the width
+            List of wrapped lines for the paragraph
         """
         lines = []
-        words = text.split()
+        words = paragraph.split()
         current_line = ""
 
         for word in words:
@@ -193,6 +193,66 @@ class EventCardGenerator:
 
         if current_line:
             lines.append(current_line)
+
+        return lines
+
+    def _wrap_text_with_newlines(
+        self,
+        text: str,
+        font: ImageFont.FreeTypeFont,
+        max_width: int,
+        draw: ImageDraw.Draw,
+    ) -> list[str]:
+        """
+        Wrap text that contains explicit newlines.
+
+        Args:
+            text: Text containing newlines to wrap
+            font: Font to use for text measurement
+            max_width: Maximum width in pixels
+            draw: ImageDraw object for text measurement
+
+        Returns:
+            List of wrapped lines preserving paragraph structure
+        """
+        lines = []
+        paragraphs = text.split("\n")
+
+        for paragraph in paragraphs:
+            if not paragraph.strip():  # Empty line
+                lines.append("")
+                continue
+
+            paragraph_lines = self._wrap_paragraph(paragraph, font, max_width, draw)
+            lines.extend(paragraph_lines)
+
+        return lines
+
+    def wrap_text(
+        self,
+        text: str,
+        font: ImageFont.FreeTypeFont,
+        max_width: int,
+        draw: ImageDraw.Draw,
+    ) -> list[str]:
+        """
+        Wrap text to fit within specified width, limiting to max lines.
+        Handles explicit newlines (\n) if present, otherwise splits by words.
+
+        Args:
+            text: Text to wrap
+            font: Font to use for text measurement
+            max_width: Maximum width in pixels
+            draw: ImageDraw object for text measurement
+
+        Returns:
+            List of text lines that fit within the width
+        """
+        # Check if text contains explicit newlines
+        if "\n" in text:
+            lines = self._wrap_text_with_newlines(text, font, max_width, draw)
+        else:
+            lines = self._wrap_paragraph(text, font, max_width, draw)
 
         return lines[: self.max_description_lines]
 
