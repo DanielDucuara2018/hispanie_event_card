@@ -21,7 +21,7 @@ class EventCardGenerator:
         self.background_color = (255, 255, 255)  # White
 
         # Design constants
-        self.max_crop_height = 600
+        self.max_crop_height = 675
         self.banner_height = 90
         self.margin = 40
         self.angle_offset = 20
@@ -43,7 +43,7 @@ class EventCardGenerator:
         # Spacing
         self.line_spacing = 40
         self.section_spacing = 80
-        self.max_description_lines = 3
+        self.max_description_lines = 4
 
         # Data keys
         self._description_key = "description_short"
