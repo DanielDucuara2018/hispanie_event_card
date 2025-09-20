@@ -119,9 +119,7 @@ class StoryEventCardGenerator(EventCardGenerator):
 
         # Load and process event image (smaller for story format)
         self.max_crop_height = (self.card_height - 20) - (content_end_y + 20)
-        img = self.load_and_process_image(event)
-        img_x = (self.card_width - img.width) // 2
-        card.paste(img, (img_x, content_end_y + 20))  # Start with some top margin
+        self.load_and_process_image(card, event["image"], content_end_y + 20)
 
         # Save the card
         card.save(output_path, quality=95)

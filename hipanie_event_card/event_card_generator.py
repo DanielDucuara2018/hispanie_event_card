@@ -2,6 +2,7 @@ import requests
 from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
+from pathlib import Path
 
 
 class EventCardGenerator:
@@ -55,7 +56,9 @@ class EventCardGenerator:
         # Data keys
         self._description_key = "description_short"
 
-    def load_and_process_image(self, event: dict[str, str]) -> Image.Image:
+    def load_and_process_image(
+        self, card: Image.Image, image_path: str | Path, content_start_y: int
+    ) -> int:
         """
         Load image from URL or file path and process it to fit the card with proper margins.
 
@@ -65,11 +68,12 @@ class EventCardGenerator:
         Returns:
             PIL Image object processed and ready for card
         """
-        if event["image"].startswith("http"):
-            response = requests.get(event["image"])
+        image_path = str(image_path)
+        if image_path.startswith("http"):
+            response = requests.get(image_path)
             img = Image.open(BytesIO(response.content)).convert("RGB")
         else:
-            img = Image.open(event["image"]).convert("RGB")
+            img = Image.open(image_path)
 
         img_width, img_height = img.size
 
@@ -89,7 +93,14 @@ class EventCardGenerator:
         if img_height > self.max_crop_height:
             img = img.crop((0, 0, img_width, self.max_crop_height))
 
-        return img
+        img_x = (self.card_width - img.width) // 2
+
+        if img.mode == "RGBA":
+            card.paste(img, (img_x, content_start_y), img)
+        else:
+            card.paste(img, (img_x, content_start_y))
+
+        return img.height
 
     def get_color(self, date: str) -> tuple[int, int, int]:
         """
@@ -445,12 +456,11 @@ class EventCardGenerator:
         draw = ImageDraw.Draw(card)
 
         # Load and process event image
-        img = self.load_and_process_image(event)
-        img_x = (self.card_width - img.width) // 2
-        card.paste(img, (img_x, self.start_card))
+        banner_start_y = self.load_and_process_image(
+            card, event["image"], self.start_card
+        )
 
         # Draw inclined banner
-        banner_start_y = img.height
         banner_color = self.get_color(event["date"])
         content_start_y = self.draw_banner(draw, banner_start_y, banner_color)
 

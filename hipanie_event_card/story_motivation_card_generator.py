@@ -2,82 +2,8 @@ from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from story_event_card_generator import StoryEventCardGenerator
 
-FR_MONTHS = {
-    "January": "Janvier",
-    "February": "Février",
-    "March": "Mars",
-    "April": "Avril",
-    "May": "Mai",
-    "June": "Juin",
-    "July": "Juillet",
-    "August": "Août",
-    "September": "Septembre",
-    "October": "Octobre",
-    "November": "Novembre",
-    "December": "Décembre",
-}
 
-FR_DAYS = {
-    "Monday": "Lundi",
-    "Tuesday": "Mardi",
-    "Wednesday": "Mercredi",
-    "Thursday": "Jeudi",
-    "Friday": "Vendredi",
-    "Saturday": "Samedi",
-    "Sunday": "Dimanche",
-}
-
-ES_DAYS = {
-    "Monday": "Lunes",
-    "Tuesday": "Martes",
-    "Wednesday": "Miércoles",
-    "Thursday": "Jueves",
-    "Friday": "Viernes",
-    "Saturday": "Sábado",
-    "Sunday": "Domingo",
-}
-
-# Weekly motivation messages mapping based on the images
-WEEKLY_MESSAGES = {
-    "Monday": {
-        "spanish_text": "Tu semana comienza aquí",
-        "french_text": "Votre semaine commence ici",
-        "emoji": "😄",
-    },
-    "Tuesday": {
-        "spanish_text": "Porque hoy es un nuevo día",
-        "french_text": "parce qu'aujourd'hui c'est un nouveau jour",
-        "emoji": "🦊",
-    },
-    "Wednesday": {
-        "spanish_text": "maneras de motivarte entre semana",
-        "french_text": "Façons de vous motiver pendant la semaine",
-        "emoji": "🐹",
-    },
-    "Thursday": {
-        "spanish_text": "Mira la agenda de hoy",
-        "french_text": "regarde l'agenda d'aujourd'hui",
-        "emoji": "🐰",
-    },
-    "Friday": {
-        "spanish_text": "Hoy es viernes de salir.",
-        "french_text": "Aujourd'hui, c'est vendredi, jour de sortie",
-        "emoji": "🦁",
-    },
-    "Saturday": {
-        "spanish_text": "¿Qué hacer este sábado?",
-        "french_text": "Que faire ce samedi ?",
-        "emoji": "🐶",
-    },
-    "Sunday": {
-        "spanish_text": "Diviértete este domingo",
-        "french_text": "Amusez-vous bien ce dimanche !",
-        "emoji": "🐸",
-    },
-}
-
-
-class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
+class StoryMotivationCardGenerator(StoryEventCardGenerator):
     """Weekly motivation card generator with gradient backgrounds and bilingual text."""
 
     def __init__(self, width, height):
@@ -146,40 +72,6 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
 
         return y_pos
 
-    def add_brand_footer(self, card: Image.Image, logo_path: str):
-        """
-        Add brand logo at the bottom of the card.
-
-        Args:
-            card: PIL Image object
-            logo_path: Path to the logo image file
-        """
-        # Load logo
-        logo = Image.open(logo_path)
-
-        # Calculate logo size based on card width with margins
-        margin = 100  # Margin from left and right sides
-        max_logo_width = self.card_width - (2 * margin)
-
-        # Calculate resize ratio to fit within card width
-        width_ratio = max_logo_width / logo.width
-
-        # Resize logo maintaining aspect ratio
-        new_width = int(logo.width * width_ratio)
-        new_height = int(logo.height * width_ratio)
-
-        logo = logo.resize((new_width, new_height), Image.Resampling.LANCZOS)
-
-        # Position logo at bottom center
-        logo_x = (self.card_width - new_width) // 2
-        logo_y = self.card_height - new_height - 350  # 350px from bottom
-
-        # Paste logo onto card
-        if logo.mode == "RGBA":
-            card.paste(logo, (logo_x, logo_y), logo)
-        else:
-            card.paste(logo, (logo_x, logo_y))
-
     def create_motivation_card(
         self, card_data: dict, output_path: Path, logo_path: Path
     ):
@@ -237,7 +129,7 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
         self.add_content(card, card_data, content_start_y)
 
         # Add brand footer
-        self.add_brand_footer(card, logo_path)
+        self.load_and_process_image(card, logo_path, self.card_height - 400)
 
         # Save the card
         card.save(output_path, quality=95)
