@@ -35,6 +35,7 @@ class EventCardGenerator:
 
         # Image constants
         self.max_crop_height = 675
+        self.image_resize_ratio = 1.0  # No resize by default
 
         # Font settings
         self.font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -57,7 +58,12 @@ class EventCardGenerator:
         self._description_key = "description_short"
 
     def load_and_process_image(
-        self, card: Image.Image, image_path: str | Path, content_start_y: int
+        self,
+        card: Image.Image,
+        image_path: str | Path,
+        content_start_y: int,
+        *,
+        resize: bool = False,
     ) -> int:
         """
         Load image from URL or file path and process it to fit the card with proper margins.
@@ -81,9 +87,11 @@ class EventCardGenerator:
         available_width = self.card_width - (2 * self.margin)
 
         # Resize image if it's wider than available width
-        if img_width > available_width:
+        if img_width > available_width or resize:
             # Calculate resize ratio to fit within available width
             resize_ratio = available_width / img_width
+            if resize:
+                resize_ratio = self.image_resize_ratio
             new_width = int(img_width * resize_ratio)
             new_height = int(img_height * resize_ratio)
             img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
