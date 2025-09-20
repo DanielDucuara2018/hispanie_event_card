@@ -53,7 +53,7 @@ class EventCardGenerator:
 
     def load_and_process_image(self, event: dict[str, str]) -> Image.Image:
         """
-        Load image from URL or file path and crop to show top 3/4 of the image only if height > width.
+        Load image from URL or file path and process it to fit the card with proper margins.
 
         Args:
             event: Dictionary containing event data with 'image' key
@@ -69,20 +69,21 @@ class EventCardGenerator:
 
         img_width, img_height = img.size
 
-        # Only crop to max height if image exceeds threshold
+        # Calculate available width (card width minus margins)
+        available_width = self.card_width - (2 * self.margin)
+
+        # Resize image if it's wider than available width
+        if img_width > available_width:
+            # Calculate resize ratio to fit within available width
+            resize_ratio = available_width / img_width
+            new_width = int(img_width * resize_ratio)
+            new_height = int(img_height * resize_ratio)
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            img_width, img_height = new_width, new_height
+
+        # Crop height if image is too tall
         if img_height > self.max_crop_height:
-            cropped_height = self.max_crop_height
-            # If image is wider than card, also crop horizontally
-            if img_width > self.card_width:
-                crop_x = (img_width - self.card_width) // 2
-                img = img.crop((crop_x, 0, crop_x + self.card_width, cropped_height))
-            else:
-                img = img.crop((0, 0, img_width, cropped_height))
-        else:
-            # Keep original size, only crop horizontally if wider than card
-            if img_width > self.card_width:
-                crop_x = (img_width - self.card_width) // 2
-                img = img.crop((crop_x, 0, crop_x + self.card_width, img_height))
+            img = img.crop((0, 0, img_width, self.max_crop_height))
 
         return img
 
