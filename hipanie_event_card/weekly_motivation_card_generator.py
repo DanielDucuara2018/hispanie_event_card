@@ -9,6 +9,81 @@ IMAGE_FOLDER = BASE_DIR.joinpath("images")
 INPUT_FOLDER = BASE_DIR.joinpath("input")
 
 
+FR_MONTHS = {
+    "January": "Janvier",
+    "February": "Février",
+    "March": "Mars",
+    "April": "Avril",
+    "May": "Mai",
+    "June": "Juin",
+    "July": "Juillet",
+    "August": "Août",
+    "September": "Septembre",
+    "October": "Octobre",
+    "November": "Novembre",
+    "December": "Décembre",
+}
+
+FR_DAYS = {
+    "Monday": "Lundi",
+    "Tuesday": "Mardi",
+    "Wednesday": "Mercredi",
+    "Thursday": "Jeudi",
+    "Friday": "Vendredi",
+    "Saturday": "Samedi",
+    "Sunday": "Dimanche",
+}
+
+ES_DAYS = {
+    "Monday": "Lunes",
+    "Tuesday": "Martes",
+    "Wednesday": "Miércoles",
+    "Thursday": "Jueves",
+    "Friday": "Viernes",
+    "Saturday": "Sábado",
+    "Sunday": "Domingo",
+}
+
+# Weekly motivation messages mapping based on the images
+WEEKLY_MESSAGES = {
+    "Monday": {
+        "spanish_text": "Tu semana comienza aquí",
+        "french_text": "Votre semaine commence ici",
+        "emoji": "😄",
+    },
+    "Tuesday": {
+        "spanish_text": "Porque hoy es un nuevo día",
+        "french_text": "parce qu'aujourd'hui est un nouveau jour",
+        "emoji": "🦊",
+    },
+    "Wednesday": {
+        "spanish_text": "maneras de motivarte entre semana",
+        "french_text": "Façons de vous motiver pendant la semaine",
+        "emoji": "🐹",
+    },
+    "Thursday": {
+        "spanish_text": "Mira la agenda de hoy",
+        "french_text": "regarde l'agenda d'aujourd'hui",
+        "emoji": "🐰",
+    },
+    "Friday": {
+        "spanish_text": "Hoy es viernes de salir.",
+        "french_text": "Aujourd'hui, c'est vendredi, jour de sortie",
+        "emoji": "🦁",
+    },
+    "Saturday": {
+        "spanish_text": "¿Qué hacer este sábado?",
+        "french_text": "Que faire ce samedi ?",
+        "emoji": "🐶",
+    },
+    "Sunday": {
+        "spanish_text": "Diviértete este domingo",
+        "french_text": "Amusez-vous bien ce dimanche !",
+        "emoji": "🐸",
+    },
+}
+
+
 class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
     """Weekly motivation card generator with gradient backgrounds and bilingual text."""
 
@@ -318,81 +393,6 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
 if __name__ == "__main__":
     start_date = datetime.now()
 
-    FR_MONTHS = {
-        "January": "Janvier",
-        "February": "Février",
-        "March": "Mars",
-        "April": "Avril",
-        "May": "Mai",
-        "June": "Juin",
-        "July": "Juillet",
-        "August": "Août",
-        "September": "Septembre",
-        "October": "Octobre",
-        "November": "Novembre",
-        "December": "Décembre",
-    }
-
-    FR_DAYS = {
-        "Monday": "Lundi",
-        "Tuesday": "Mardi",
-        "Wednesday": "Mercredi",
-        "Thursday": "Jeudi",
-        "Friday": "Vendredi",
-        "Saturday": "Samedi",
-        "Sunday": "Dimanche",
-    }
-
-    ES_DAYS = {
-        "Monday": "Lunes",
-        "Tuesday": "Martes",
-        "Wednesday": "Miércoles",
-        "Thursday": "Jueves",
-        "Friday": "Viernes",
-        "Saturday": "Sábado",
-        "Sunday": "Domingo",
-    }
-
-    # Weekly motivation messages mapping based on the images
-    WEEKLY_MESSAGES = {
-        "Monday": {
-            "spanish_text": "Tu semana comienza aquí",
-            "french_text": "Votre semaine commence ici",
-            "emoji": "😄",
-        },
-        "Tuesday": {
-            "spanish_text": "Porque hoy es un nuevo día",
-            "french_text": "parce qu'aujourd'hui est un nouveau jour",
-            "emoji": "🦊",
-        },
-        "Wednesday": {
-            "spanish_text": "maneras de motivarte entre semana",
-            "french_text": "Façons de vous motiver pendant la semaine",
-            "emoji": "🐹",
-        },
-        "Thursday": {
-            "spanish_text": "Mira la agenda de hoy",
-            "french_text": "regarde l'agenda d'aujourd'hui",
-            "emoji": "🐰",
-        },
-        "Friday": {
-            "spanish_text": "Hoy es viernes de salir.",
-            "french_text": "Aujourd'hui, c'est vendredi, jour de sortie",
-            "emoji": "🦁",
-        },
-        "Saturday": {
-            "spanish_text": "¿Qué hacer este sábado?",
-            "french_text": "Que faire ce samedi ?",
-            "emoji": "🐶",
-        },
-        "Sunday": {
-            "spanish_text": "Diviértete este domingo",
-            "french_text": "Amusez-vous bien ce dimanche !",
-            "emoji": "🐸",
-        },
-    }
-
-    # Example card data based on the images
     data_cards = [
         {
             "date": f"{single_date.day} {FR_MONTHS[single_date.strftime('%B')].upper()}",
