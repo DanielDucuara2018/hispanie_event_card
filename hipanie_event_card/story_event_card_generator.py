@@ -82,32 +82,7 @@ class StoryEventCardGenerator(EventCardGenerator):
         Returns:
             Tuple of two RGB color tuples for gradient (top_color, white)
         """
-        day = date.upper()
-
-        # Monday/Lunes/Lundi - Orange/Yellow gradient
-        if any(d in day for d in ["LUNES", "LUNDI", "MONDAY"]):
-            return ((255, 193, 7), self.background_color)  # Orange to yellow
-        # Tuesday/Martes/Mardi - Blue gradient
-        elif any(d in day for d in ["MARTES", "MARDI", "TUESDAY"]):
-            return ((63, 81, 181), self.background_color)  # Deep blue to light blue
-        # Wednesday/Miércoles/Mercredi - Yellow gradient
-        elif any(d in day for d in ["MIERCOLES", "MERCREDI", "WEDNESDAY"]):
-            return ((255, 235, 59), self.background_color)  # Yellow to light yellow
-        # Thursday/Jueves/Jeudi - Purple gradient
-        elif any(d in day for d in ["JUEVES", "JEUDI", "THURSDAY"]):
-            return ((156, 39, 176), self.background_color)  # Purple to light purple
-        # Friday/Viernes/Vendredi - Red gradient
-        elif any(d in day for d in ["VIERNES", "VENDREDI", "FRIDAY"]):
-            return ((244, 67, 54), self.background_color)  # Red to light red
-        # Saturday/Sábado/Samedi - Green gradient
-        elif any(d in day for d in ["SABADO", "SAMEDI", "SATURDAY"]):
-            return ((76, 175, 80), self.background_color)  # Green to light green
-        # Sunday/Domingo/Dimanche - Green gradient (as shown in images)
-        elif any(d in day for d in ["DOMINGO", "DIMANCHE", "SUNDAY"]):
-            return ((76, 175, 80), self.background_color)  # Green to light green
-        # Default - Orange gradient
-        else:
-            return ((255, 193, 7), self.background_color)
+        return (self.get_color(date), self.background_color)
 
     def add_banner_text(self, card: Image.Image, date: str, banner_start_y: int):
         """
