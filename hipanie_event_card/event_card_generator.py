@@ -19,17 +19,21 @@ class EventCardGenerator:
         self.card_height = height
         self.start_card = 0
         self.background_color = (255, 255, 255)  # White
+        self.margin = 40
+        self.left_margin = 40
+        self.right_margin = 40
 
         # Banner settings
         self.banner_text_color = (255, 255, 255)  # Default banner color (white)
-
-        # Design constants
-        self.max_crop_height = 675
+        self.banner_width_ratio = 1.0  # Full width by default
+        self.banner_text_position_ratio = (
+            0.5  # Center position by default (0.0 = left, 1.0 = right)
+        )
+        self.banner_angle_offset = 20
         self.banner_height = 90
-        self.margin = 40
-        self.angle_offset = 20
-        self.left_margin = 40
-        self.right_margin = 40
+
+        # Image constants
+        self.max_crop_height = 675
 
         # Font settings
         self.font_bold = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -98,30 +102,68 @@ class EventCardGenerator:
             RGB color tuple for the banner
         """
         day = date.upper()
-        # Monday/Lunes/Lundi - Orange/Yellow gradient
+
+        # Monday/Lunes/Lundi - Orange
         if any(d in day for d in ["LUNES", "LUNDI", "MONDAY"]):
-            return (255, 193, 7)  # Orange to yellow
-        # Tuesday/Martes/Mardi - Blue gradient
+            return (255, 152, 0)  # Orange
+        # Tuesday/Martes/Mardi - Blue
         elif any(d in day for d in ["MARTES", "MARDI", "TUESDAY"]):
-            return (63, 81, 181)  # Deep blue to light blue
-        # Wednesday/Miércoles/Mercredi - Yellow gradient
+            return (33, 150, 243)  # Blue
+        # Wednesday/Miércoles/Mercredi - Yellow
         elif any(d in day for d in ["MIERCOLES", "MERCREDI", "WEDNESDAY"]):
-            return (255, 235, 59)  # Yellow to light yellow
-        # Thursday/Jueves/Jeudi - Purple gradient
+            return (50, 50, 10)  # Yellow
+        # Thursday/Jueves/Jeudi - Purple
         elif any(d in day for d in ["JUEVES", "JEUDI", "THURSDAY"]):
-            return (156, 39, 176)  # Purple to light purple
-        # Friday/Viernes/Vendredi - Red gradient
+            return (156, 39, 176)  # Purple
+        # Friday/Viernes/Vendredi - Red
         elif any(d in day for d in ["VIERNES", "VENDREDI", "FRIDAY"]):
-            return (244, 67, 54)  # Red to light red
-        # Saturday/Sábado/Samedi - Green gradient
+            return (244, 67, 54)  # Red
+        # Saturday/Sábado/Samedi - Green
         elif any(d in day for d in ["SABADO", "SAMEDI", "SATURDAY"]):
-            return (76, 175, 80)  # Green to light green
-        # Sunday/Domingo/Dimanche - Green gradient (as shown in images)
+            return (76, 175, 80)  # Green
+        # Sunday/Domingo/Dimanche - Teal
         elif any(d in day for d in ["DOMINGO", "DIMANCHE", "SUNDAY"]):
-            return (76, 175, 80)  # Green to light green
-        # Default - Orange gradient
+            return (0, 150, 136)  # Teal
+        # Default - Orange
         else:
-            return (255, 193, 7)  # Orange to yellow
+            return (255, 152, 0)  # Orange
+
+    def get_color_dark(self, date: str) -> tuple[int, int, int]:
+        """
+        Get dark variant of the day color for better contrast.
+
+        Args:
+            date: Date string containing day information
+
+        Returns:
+            RGB color tuple for the dark variant
+        """
+        day = date.upper()
+
+        # Monday/Lunes/Lundi - Dark Orange
+        if any(d in day for d in ["LUNES", "LUNDI", "MONDAY"]):
+            return (230, 124, 0)  # Dark Orange
+        # Tuesday/Martes/Mardi - Dark Blue
+        elif any(d in day for d in ["MARTES", "MARDI", "TUESDAY"]):
+            return (25, 118, 210)  # Dark Blue
+        # Wednesday/Miércoles/Mercredi - Dark Yellow
+        elif any(d in day for d in ["MIERCOLES", "MERCREDI", "WEDNESDAY"]):
+            return (251, 192, 45)  # Dark Yellow
+        # Thursday/Jueves/Jeudi - Dark Purple
+        elif any(d in day for d in ["JUEVES", "JEUDI", "THURSDAY"]):
+            return (123, 31, 162)  # Dark Purple
+        # Friday/Viernes/Vendredi - Dark Red
+        elif any(d in day for d in ["VIERNES", "VENDREDI", "FRIDAY"]):
+            return (211, 47, 47)  # Dark Red
+        # Saturday/Sábado/Samedi - Dark Green
+        elif any(d in day for d in ["SABADO", "SAMEDI", "SATURDAY"]):
+            return (56, 142, 60)  # Dark Green
+        # Sunday/Domingo/Dimanche - Dark Teal
+        elif any(d in day for d in ["DOMINGO", "DIMANCHE", "SUNDAY"]):
+            return (0, 121, 107)  # Dark Teal
+        # Default - Dark Orange
+        else:
+            return (230, 124, 0)  # Dark Orange
 
     def draw_banner(
         self,
@@ -130,36 +172,54 @@ class EventCardGenerator:
         banner_color: tuple[int, int, int],
     ) -> int:
         """
-        Draw an inclined banner rectangle on the card.
+        Draw an inclined banner rectangle on the card with adjustable width.
 
         Args:
             draw: ImageDraw object for drawing on the card
             banner_start_y: Y position where banner starts
             banner_color: RGB color tuple for the banner
+            banner_width_ratio: Ratio of card width to use for banner (0.0 to 1.0)
 
         Returns:
             Y position where content should start after the banner
         """
-        # Draw inclined rectangle as polygon
+        # Calculate banner width based on ratio
+        available_width = self.card_width - (2 * self.margin)
+        banner_width = available_width * self.banner_width_ratio
+        banner_right_margin = self.margin + (available_width - banner_width)
+
+        # Draw inclined rectangle as polygon with adjustable width
         banner_points = [
-            (self.margin, banner_start_y + self.angle_offset),  # top-left (lower)
-            (self.card_width - self.margin, banner_start_y),  # top-right (higher)
             (
-                self.card_width - self.margin,
+                self.margin,
+                banner_start_y + self.banner_angle_offset,
+            ),  # top-left (lower)
+            (
+                self.card_width - banner_right_margin,
+                banner_start_y,
+            ),  # top-right (higher)
+            (
+                self.card_width - banner_right_margin,
                 banner_start_y + self.banner_height,
             ),  # bottom-right
             (
                 self.margin,
-                banner_start_y + self.banner_height + self.angle_offset,
+                banner_start_y + self.banner_height + self.banner_angle_offset,
             ),  # bottom-left (lower)
         ]
 
         draw.polygon(banner_points, fill=banner_color)
-        return banner_start_y + self.banner_height + self.angle_offset + 30
+        return banner_start_y + self.banner_height + self.banner_angle_offset + 30
 
-    def add_banner_text(self, card: Image.Image, date: str, banner_start_y: int):
+    def add_banner_text(
+        self,
+        card: Image.Image,
+        date: str,
+        banner_start_y: int,
+        font_type: ImageFont.FreeTypeFont,
+    ):
         """
-        Add centered date/time text to the banner.
+        Add positioned date/time text to the banner based on banner width and position ratio.
 
         Args:
             card: PIL Image object representing the card
@@ -167,21 +227,36 @@ class EventCardGenerator:
             banner_start_y: Y position where banner starts
         """
         draw = ImageDraw.Draw(card)
-        font_banner = ImageFont.truetype(self.font_bold, self.banner_font_size)
+
+        # Calculate banner dimensions
+        available_width = self.card_width - (2 * self.margin)
+        banner_width = available_width * self.banner_width_ratio
+        banner_right_margin = self.margin + (available_width - banner_width)
+        banner_left = self.margin
+        banner_right = self.card_width - banner_right_margin
 
         with Pilmoji(card) as pilmoji:
-            bbox = draw.textbbox((0, 0), date, font=font_banner)
+            bbox = draw.textbbox((0, 0), date, font=font_type)
             text_width = bbox[2] - bbox[0]
-            text_x = (self.card_width - text_width) // 2
+
+            # Calculate text position based on banner width and position ratio
+            # 0.0 = left aligned within banner, 0.5 = center, 1.0 = right aligned
+            banner_text_area = banner_right - banner_left
+            available_text_space = banner_text_area - text_width
+            text_x = banner_left + (
+                available_text_space * self.banner_text_position_ratio
+            )
+
             text_y = (
                 banner_start_y
                 + (self.banner_height - self.banner_font_size) // 2
-                + self.angle_offset // 2
+                + self.banner_angle_offset // 2
             )
+
             pilmoji.text(
                 (text_x, text_y),
                 date,
-                font=font_banner,
+                font=font_type,
                 fill=self.banner_text_color,
             )
 
@@ -283,72 +358,58 @@ class EventCardGenerator:
 
         return lines[: self.max_description_lines]
 
-    def add_event_type(
-        self, card: Image.Image, event: dict[str, str], y_position: int
+    def add_event_info(
+        self,
+        card: Image.Image,
+        text: str,
+        y_position: int,
+        font_type: ImageFont.FreeTypeFont,
+        *,
+        split_text: bool = False,
+        section_spacing: int | None = None,
     ) -> int:
         """Add event type/category with emoji to the card."""
-        font_type = ImageFont.truetype(self.font_regular, self.type_font_size)
+        if split_text:
+            return self.split_text(card, text, y_position, font_type)
+
         with Pilmoji(card) as pilmoji:
             pilmoji.text(
                 (self.left_margin, y_position),
-                f"🎉 {event['type']}",
+                text,
                 font=font_type,
                 fill="black",
             )
-        return y_position + self.section_spacing
+        return y_position + (section_spacing or self.section_spacing)
 
-    def add_event_title(
-        self, card: Image.Image, event: dict[str, str], y_position: int
-    ) -> int:
-        """Add event title to the card."""
-        font_title = ImageFont.truetype(self.font_bold, self.title_font_size)
-        with Pilmoji(card) as pilmoji:
-            pilmoji.text(
-                (self.left_margin, y_position),
-                event["title"],
-                font=font_title,
-                fill="black",
-            )
-        return y_position + self.section_spacing
-
-    def add_event_description(
-        self, card: Image.Image, event: dict[str, str], y_position: int
+    def split_text(
+        self,
+        card: Image.Image,
+        text: str,
+        y_position: int,
+        font_type: ImageFont.FreeTypeFont,
+        *,
+        section_spacing: int | None = None,
     ) -> int:
         """Add wrapped event description to the card."""
         draw = ImageDraw.Draw(card)
-        font_desc = ImageFont.truetype(self.font_regular, self.desc_font_size)
         max_desc_width = self.card_width - self.left_margin - self.right_margin
 
-        lines = self.wrap_text(
-            event[self._description_key], font_desc, max_desc_width, draw
-        )
+        lines = self.wrap_text(text, font_type, max_desc_width, draw)
 
         with Pilmoji(card) as pilmoji:
             for i, line in enumerate(lines):
                 pilmoji.text(
                     (self.left_margin, y_position + i * self.line_spacing),
                     line,
-                    font=font_desc,
+                    font=font_type,
                     fill="black",
                 )
 
         return (
-            y_position + len(lines) * self.line_spacing + int(self.section_spacing / 2)
+            y_position
+            + len(lines) * self.line_spacing
+            + int((section_spacing or self.section_spacing) / 2)
         )
-
-    def add_event_cost(
-        self, card: Image.Image, event: dict[str, str], y_position: int
-    ) -> int:
-        """Add event cost/pricing information to the card."""
-        font_cost = ImageFont.truetype(self.font_bold, self.cost_font_size)
-        with Pilmoji(card) as pilmoji:
-            pilmoji.text(
-                (self.left_margin, y_position),
-                f"🎫 {event['cost']}",
-                font=font_cost,
-                fill="black",
-            )
-        return y_position + 50
 
     def add_separator_line(self, card: Image.Image, y_position: int) -> int:
         """Add a horizontal separator line to the card."""
@@ -363,32 +424,46 @@ class EventCardGenerator:
         )
         return y_position + 30
 
-    def add_event_location(
-        self, card: Image.Image, event: dict[str, str], y_position: int
-    ) -> int:
-        """Add event location to the card."""
-        font_location = ImageFont.truetype(self.font_regular, self.location_font_size)
-        with Pilmoji(card) as pilmoji:
-            pilmoji.text(
-                (self.left_margin, y_position),
-                f"📍 {event['location']}",
-                font=font_location,
-                fill="black",
-            )
-        return y_position + 50
-
-    def add_event_content(
+    def add_content(
         self, card: Image.Image, event: dict[str, str], content_start_y: int
     ) -> int:
         """Add all event content to the card."""
         y_pos = content_start_y + 20  # Small padding from banner
 
-        y_pos = self.add_event_type(card, event, y_pos)
-        y_pos = self.add_event_title(card, event, y_pos)
-        y_pos = self.add_event_description(card, event, y_pos)
-        y_pos = self.add_event_cost(card, event, y_pos)
+        y_pos = self.add_event_info(
+            card,
+            f"🎉 {event['type']}",
+            y_pos,
+            ImageFont.truetype(self.font_regular, self.type_font_size),
+        )
+        y_pos = self.add_event_info(
+            card,
+            event["title"],
+            y_pos,
+            ImageFont.truetype(self.font_bold, self.title_font_size),
+        )
+        y_pos = self.add_event_info(
+            card,
+            event[self._description_key],
+            y_pos,
+            ImageFont.truetype(self.font_regular, self.desc_font_size),
+            split_text=True,
+        )
+        y_pos = self.add_event_info(
+            card,
+            event["cost"],
+            y_pos,
+            ImageFont.truetype(self.font_bold, self.cost_font_size),
+            section_spacing=50,
+        )
         y_pos = self.add_separator_line(card, y_pos)
-        y_pos = self.add_event_location(card, event, y_pos)
+        y_pos = self.add_event_info(
+            card,
+            f"📍 {event['location']}",
+            y_pos,
+            ImageFont.truetype(self.font_regular, self.location_font_size),
+            section_spacing=50,
+        )
 
         return y_pos
 
@@ -417,10 +492,15 @@ class EventCardGenerator:
         content_start_y = self.draw_banner(draw, banner_start_y, banner_color)
 
         # Add banner text
-        self.add_banner_text(card, event["date"], banner_start_y)
+        self.add_banner_text(
+            card,
+            event["date"],
+            banner_start_y,
+            ImageFont.truetype(self.font_bold, self.banner_font_size),
+        )
 
         # Add event content
-        self.add_event_content(card, event, content_start_y)
+        self.add_content(card, event, content_start_y)
 
         # Save the card
         card.save(output_path, quality=95)

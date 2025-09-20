@@ -1,4 +1,3 @@
-from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from event_card_generator import EventCardGenerator
@@ -84,27 +83,6 @@ class StoryEventCardGenerator(EventCardGenerator):
         """
         return (self.get_color(date), self.background_color)
 
-    def add_banner_text(self, card: Image.Image, date: str, banner_start_y: int):
-        """
-        Add centered date/time text to the story format banner.
-
-        Args:
-            card: PIL Image object representing the card
-            date: Date string to display on banner
-            banner_start_y: Y position where banner starts
-        """
-        draw = ImageDraw.Draw(card)
-        font_banner = ImageFont.truetype(self.font_bold, self.banner_font_size)
-
-        with Pilmoji(card) as pilmoji:
-            bbox = draw.textbbox((0, 0), date, font=font_banner)
-            text_width = bbox[2] - bbox[0]
-            text_x = (self.card_width - text_width) // 2
-            text_y = banner_start_y + (self.banner_height - self.banner_font_size) // 2
-            pilmoji.text(
-                (text_x, text_y), date, font=font_banner, fill=self.background_color
-            )
-
     def create_event_card(self, event: dict[str, str], output_path: str):
         """
         Create a story format event card with gradient background and centered layout.
@@ -129,11 +107,15 @@ class StoryEventCardGenerator(EventCardGenerator):
         content_start_y = self.draw_banner(draw, self.start_card, banner_color)
 
         # Add banner text
-        self.add_banner_text(card, event["date"], self.start_card)
+        self.add_banner_text(
+            card,
+            event["date"],
+            self.start_card,
+            ImageFont.truetype(self.font_bold, self.banner_font_size),
+        )
 
         # Add story content
-        # self.add_story_content(card, event, content_start_y)
-        content_end_y = self.add_event_content(card, event, content_start_y)
+        content_end_y = self.add_content(card, event, content_start_y)
 
         # Load and process event image (smaller for story format)
         self.max_crop_height = (self.card_height - 20) - (content_end_y + 20)
