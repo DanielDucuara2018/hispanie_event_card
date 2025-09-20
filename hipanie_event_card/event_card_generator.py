@@ -94,14 +94,30 @@ class EventCardGenerator:
             RGB color tuple for the banner
         """
         day = date.upper()
-        if "VENDREDI" in day or "VIERNES" in day or "FRIDAY" in day:
-            return (67, 160, 71)  # Green
-        elif "JEUDI" in day or "JUEVES" in day or "THURSDAY" in day:
-            return (66, 165, 245)  # Blue
-        elif "MERCREDI" in day or "MIERCOLES" in day or "WEDNESDAY" in day:
-            return (102, 187, 106)  # Light green
+        # Monday/Lunes/Lundi - Orange/Yellow gradient
+        if any(d in day for d in ["LUNES", "LUNDI", "MONDAY"]):
+            return (255, 193, 7)  # Orange to yellow
+        # Tuesday/Martes/Mardi - Blue gradient
+        elif any(d in day for d in ["MARTES", "MARDI", "TUESDAY"]):
+            return (63, 81, 181)  # Deep blue to light blue
+        # Wednesday/Miércoles/Mercredi - Yellow gradient
+        elif any(d in day for d in ["MIERCOLES", "MERCREDI", "WEDNESDAY"]):
+            return (255, 235, 59)  # Yellow to light yellow
+        # Thursday/Jueves/Jeudi - Purple gradient
+        elif any(d in day for d in ["JUEVES", "JEUDI", "THURSDAY"]):
+            return (156, 39, 176)  # Purple to light purple
+        # Friday/Viernes/Vendredi - Red gradient
+        elif any(d in day for d in ["VIERNES", "VENDREDI", "FRIDAY"]):
+            return (244, 67, 54)  # Red to light red
+        # Saturday/Sábado/Samedi - Green gradient
+        elif any(d in day for d in ["SABADO", "SAMEDI", "SATURDAY"]):
+            return (76, 175, 80)  # Green to light green
+        # Sunday/Domingo/Dimanche - Green gradient (as shown in images)
+        elif any(d in day for d in ["DOMINGO", "DIMANCHE", "SUNDAY"]):
+            return (76, 175, 80)  # Green to light green
+        # Default - Orange gradient
         else:
-            return (255, 193, 7)  # Yellow/orange
+            return (255, 193, 7)  # Orange to yellow
 
     def draw_banner(
         self,
