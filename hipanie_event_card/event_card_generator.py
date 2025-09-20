@@ -19,6 +19,7 @@ class EventCardGenerator:
         self.card_height = height
         self.start_card = 0
         self.background_color = (255, 255, 255)  # White
+        self.banner_background_color = (255, 255, 255)  # Default banner color (white)
 
         # Design constants
         self.max_crop_height = 675
@@ -175,7 +176,10 @@ class EventCardGenerator:
                 + self.angle_offset // 2
             )
             pilmoji.text(
-                (text_x, text_y), date, font=font_banner, fill=self.background_color
+                (text_x, text_y),
+                date,
+                font=font_banner,
+                fill=self.banner_background_color,
             )
 
     def _wrap_paragraph(

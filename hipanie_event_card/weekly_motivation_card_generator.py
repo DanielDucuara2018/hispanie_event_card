@@ -23,33 +23,45 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
         super().__init__(width, height)
 
         # Override settings for motivation cards
-        self.start_card = 250  # Start lower for date section
+        self.start_card = 80  # Start higher for better date placement
 
-        # Text settings
-        self.main_text_size = 120
-        self.secondary_text_size = 80
-        self.date_text_size = 60
+        # Text settings - adjusted to match images
+        self.main_text_size = 90  # Smaller for better fit
+        self.secondary_text_size = 70  # Smaller for better fit
+        self.date_text_size = 50  # Smaller for better fit
         self.brand_text_size = 100
 
         # Colors
         self.text_color = (0, 0, 0)  # Black text
-        self.date_bg_color = (255, 255, 255, 200)  # Semi-transparent white
+        self.date_bg_color = (255, 255, 255, 230)  # More opaque white
 
     def add_date_section(self, card: Image.Image, card_data: dict):
         """
-        Add date section with day number and name.
+        Add date section with day number/month and bilingual day names in a centered rounded rectangle.
 
         Args:
             card: PIL Image object
-            date_info: Dictionary with 'day_number', 'month', 'day_name_es', 'day_name_fr'
+            card_data: Dictionary with 'date', 'day_name_es', 'day_name_fr'
         """
         draw = ImageDraw.Draw(card)
+        font_date = ImageFont.truetype(self.font_bold, self.date_text_size)
 
-        # Create semi-transparent rounded rectangle for date
-        date_rect_height = 150
-        date_rect_width = 500
+        # Calculate text dimensions for proper rectangle sizing
+        date_text = card_data["date"]
+        day_text = f"{card_data['day_name_es']} / {card_data['day_name_fr']}"
+
+        date_bbox = draw.textbbox((0, 0), date_text, font=font_date)
+        day_bbox = draw.textbbox((0, 0), day_text, font=font_date)
+
+        # Use the wider text for rectangle width
+        max_text_width = max(date_bbox[2] - date_bbox[0], day_bbox[2] - day_bbox[0])
+
+        # Rectangle dimensions with padding
+        padding = 40
+        date_rect_width = max_text_width + (padding * 2)
+        date_rect_height = 140
         date_rect_x = (self.card_width - date_rect_width) // 2
-        date_rect_y = 80
+        date_rect_y = self.start_card
 
         # Draw rounded rectangle background
         self._draw_rounded_rectangle(
@@ -64,53 +76,50 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
             20,
         )
 
-        # Add date text
-        font_date = ImageFont.truetype(self.font_bold, self.date_text_size)
+        # Center date text within rectangle
+        date_text_x = (self.card_width - (date_bbox[2] - date_bbox[0])) // 2
+        date_text_y = date_rect_y + 25
+        draw.text(
+            (date_text_x, date_text_y), date_text, font=font_date, fill=self.text_color
+        )
 
-        # Day number and month
-        date_text = card_data["date"]
-        bbox = draw.textbbox((0, 0), date_text, font=font_date)
-        text_width = bbox[2] - bbox[0]
-        text_x = (self.card_width - text_width) // 2
-        text_y = date_rect_y + 20
-
-        draw.text((text_x, text_y), date_text, font=font_date, fill=self.text_color)
-
-        # Day names (bilingual)
-        day_text = f"{card_data['day_name_es']} / {card_data['day_name_fr']}"
-        bbox = draw.textbbox((0, 0), day_text, font=font_date)
-        text_width = bbox[2] - bbox[0]
-        text_x = (self.card_width - text_width) // 2
-        text_y = date_rect_y + 80
-
-        draw.text((text_x, text_y), day_text, font=font_date, fill=self.text_color)
+        # Center day names text within rectangle
+        day_text_x = (self.card_width - (day_bbox[2] - day_bbox[0])) // 2
+        day_text_y = date_rect_y + 80
+        draw.text(
+            (day_text_x, day_text_y), day_text, font=font_date, fill=self.text_color
+        )
 
     def add_main_message(self, card: Image.Image, card_data: dict, start_y: int):
         """
-        Add main motivational message in both languages.
+        Add main motivational message in both languages with proper centering and line wrapping.
 
         Args:
             card: PIL Image object
-            message_data: Dictionary with 'spanish_text', 'french_text', 'emoji'
+            card_data: Dictionary with 'spanish_text', 'french_text', 'emoji'
             start_y: Y position to start the message
 
         Returns:
             int: Y position after the message
         """
         draw = ImageDraw.Draw(card)
+        margin = 80  # Side margins matching the images
+        max_text_width = self.card_width - (2 * margin)
 
         with Pilmoji(card) as pilmoji:
-            # Spanish text (larger)
+            # Spanish text (larger, bold)
             font_main = ImageFont.truetype(self.font_bold, self.main_text_size)
             spanish_text = card_data["spanish_text"]
             if "emoji" in card_data:
                 spanish_text += f" {card_data['emoji']}"
 
-            wrapped_lines = self._wrap_text(
-                spanish_text, font_main, self.card_width - 100
+            # Wrap Spanish text
+            wrapped_lines = self._wrap_text_custom(
+                spanish_text, font_main, max_text_width, draw
             )
             current_y = start_y
 
+            # Draw each line centered
             for line in wrapped_lines:
                 bbox = draw.textbbox((0, 0), line, font=font_main)
                 text_width = bbox[2] - bbox[0]
@@ -118,11 +127,11 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
                 pilmoji.text(
                     (text_x, current_y), line, font=font_main, fill=self.text_color
                 )
-                current_y += self.main_text_size + 20
+                current_y += self.main_text_size + 10  # Tight line spacing
 
-            current_y += 50  # Space between languages
+            current_y += 60  # Space between languages
 
-            # French text (smaller)
+            # French text (smaller, regular)
             font_secondary = ImageFont.truetype(
                 self.font_regular, self.secondary_text_size
             )
@@ -130,10 +139,12 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
             if "emoji" in card_data:
                 french_text += f" {card_data['emoji']}"
 
-            wrapped_lines = self._wrap_text(
-                french_text, font_secondary, self.card_width - 100
+            # Wrap French text
+            wrapped_lines = self._wrap_text_custom(
+                french_text, font_secondary, max_text_width, draw
             )
 
+            # Draw each line centered
             for line in wrapped_lines:
                 bbox = draw.textbbox((0, 0), line, font=font_secondary)
                 text_width = bbox[2] - bbox[0]
@@ -141,9 +152,51 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
                 pilmoji.text(
                     (text_x, current_y), line, font=font_secondary, fill=self.text_color
                 )
-                current_y += self.secondary_text_size + 15
+                current_y += self.secondary_text_size + 8  # Tight line spacing
 
             return current_y
+
+    def _wrap_text_custom(
+        self, text: str, font: ImageFont.ImageFont, max_width: int, draw: ImageDraw.Draw
+    ) -> list[str]:
+        """
+        Custom text wrapping that handles emojis and provides better line breaks.
+
+        Args:
+            text: Text to wrap
+            font: Font to use for measuring
+            max_width: Maximum width in pixels
+            draw: ImageDraw object for text measurement
+
+        Returns:
+            List of wrapped text lines
+        """
+        words = text.split()
+        lines = []
+        current_line = []
+
+        for word in words:
+            # Test if adding this word would exceed max width
+            test_line = " ".join(current_line + [word])
+            bbox = draw.textbbox((0, 0), test_line, font=font)
+            text_width = bbox[2] - bbox[0]
+
+            if text_width <= max_width:
+                current_line.append(word)
+            else:
+                # Current line is full, start a new one
+                if current_line:
+                    lines.append(" ".join(current_line))
+                    current_line = [word]
+                else:
+                    # Single word is too long, add it anyway
+                    lines.append(word)
+
+        # Add remaining words
+        if current_line:
+            lines.append(" ".join(current_line))
+
+        return lines
 
     def add_brand_footer(self, card: Image.Image, logo_path: str):
         """
@@ -230,12 +283,12 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
         self, card_data: dict, output_path: Path, logo_path: Path
     ):
         """
-        Create a weekly motivation card.
+        Create a weekly motivation card with proper text placement matching reference images.
 
         Args:
             card_data: Dictionary containing card data
             output_path: Path where to save the generated card
-            logo_path: Path to the logo image file (optional)
+            logo_path: Path to the logo image file
         """
         # Create base card
         card = Image.new(
@@ -246,11 +299,12 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
         gradient_colors = self.get_gradient_colors(card_data["day_name_fr"])
         self.create_gradient_background(card, gradient_colors)
 
-        # Add date section
+        # Add date section (at the top)
         self.add_date_section(card, card_data)
 
-        # Add main message
-        self.add_main_message(card, card_data, self.start_card + 150)
+        # Add main message (centered in the middle area)
+        message_start_y = 300  # Start after date section with good spacing
+        self.add_main_message(card, card_data, message_start_y)
 
         # Add brand footer
         self.add_brand_footer(card, logo_path)
@@ -350,15 +404,10 @@ if __name__ == "__main__":
     ]
 
     generator = WeeklyMotivationCardGenerator()
-    logo_path = IMAGE_FOLDER.joinpath("logo.png")  # Adjust logo filename as needed
-
     for city in ["paris", "nantes"]:
         for card_data in data_cards:
             output_path = IMAGE_FOLDER.joinpath(
                 f"motivation_card_{city}_{card_data['date']}.png"
-            )
-            generator.create_motivation_card(
-                card_data, output_path, INPUT_FOLDER.joinpath(f"{city}_logo.png")
             )
             generator.create_motivation_card(
                 card_data, output_path, INPUT_FOLDER.joinpath(f"{city}_logo.png")
