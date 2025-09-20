@@ -23,7 +23,7 @@ class MotivationCardGenerator(EventCardGenerator):
         self.right_margin = 150
 
         # Image settings
-        self.image_resize_ratio = 0.7  # Resize images to 70% of available width
+        self.image_resize_ratio = 0.5  # Resize images to 70% of available width
 
         # Text settings - adjusted to match images
         self.main_text_size = 90  # Smaller for better fit
@@ -92,7 +92,7 @@ class MotivationCardGenerator(EventCardGenerator):
 
         # Add brand header
         y_pos = self.load_and_process_image(
-            card, logo_path, self.start_card, resize=True
+            card, logo_path, self.start_card, content_start_x=100, resize=True
         )
 
         draw = ImageDraw.Draw(card)

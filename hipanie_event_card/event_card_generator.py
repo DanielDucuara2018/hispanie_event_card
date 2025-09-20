@@ -63,6 +63,7 @@ class EventCardGenerator:
         image_path: str | Path,
         content_start_y: int,
         *,
+        content_start_x: int | None = None,
         resize: bool = False,
     ) -> int:
         """
@@ -102,6 +103,8 @@ class EventCardGenerator:
             img = img.crop((0, 0, img_width, self.max_crop_height))
 
         img_x = (self.card_width - img.width) // 2
+        if content_start_x is not None:
+            img_x = content_start_x
 
         if img.mode == "RGBA":
             card.paste(img, (img_x, content_start_y), img)
