@@ -2,11 +2,6 @@ from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from story_event_card_generator import StoryEventCardGenerator
 
-BASE_DIR = Path(__file__).parent
-IMAGE_FOLDER = BASE_DIR.joinpath("images")
-INPUT_FOLDER = BASE_DIR.joinpath("input")
-
-
 FR_MONTHS = {
     "January": "Janvier",
     "February": "Février",
@@ -51,7 +46,7 @@ WEEKLY_MESSAGES = {
     },
     "Tuesday": {
         "spanish_text": "Porque hoy es un nuevo día",
-        "french_text": "parce qu'aujourd'hui est un nouveau jour",
+        "french_text": "parce qu'aujourd'hui c'est un nouveau jour",
         "emoji": "🦊",
     },
     "Wednesday": {
@@ -121,6 +116,10 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
         self.banner_angle_offset = 20
         self.banner_height = 90
         self.banner_angle_offset = 0
+
+        # Weather settings
+        self.weather_text_size = 40
+        self.weather_margin_top = 50
 
     def add_content(
         self, card: Image.Image, card_data: dict[str, str], content_start_y: int
@@ -201,10 +200,22 @@ class WeeklyMotivationCardGenerator(StoryEventCardGenerator):
         gradient_colors = self.get_gradient_colors(card_data["day_name_fr"])
         self.create_gradient_background(card, gradient_colors)
 
+        # Add weather info if available
+        y_pos = self.start_card
+        if "weather" in card_data:
+            weather_data = card_data["weather"]
+            y_pos = self.add_event_info(
+                card,
+                f"{weather_data['emoji']} {weather_data['temperature']}°C - {weather_data['description']}",
+                y_pos,
+                ImageFont.truetype(self.font_regular, self.weather_text_size),
+                section_spacing=100,
+            )
+
         y_pos = self.add_event_info(
             card,
             card_data["date"],
-            self.start_card,
+            y_pos,
             ImageFont.truetype(self.font_regular, self.date_text_size),
         )
 

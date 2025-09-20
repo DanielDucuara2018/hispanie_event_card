@@ -111,7 +111,7 @@ class EventCardGenerator:
             return (33, 150, 243)  # Blue
         # Wednesday/Miércoles/Mercredi - Yellow
         elif any(d in day for d in ["MIERCOLES", "MERCREDI", "WEDNESDAY"]):
-            return (50, 50, 10)  # Yellow
+            return (255, 255, 0)  # Yellow
         # Thursday/Jueves/Jeudi - Purple
         elif any(d in day for d in ["JUEVES", "JEUDI", "THURSDAY"]):
             return (156, 39, 176)  # Purple
@@ -127,43 +127,6 @@ class EventCardGenerator:
         # Default - Orange
         else:
             return (255, 152, 0)  # Orange
-
-    def get_color_dark(self, date: str) -> tuple[int, int, int]:
-        """
-        Get dark variant of the day color for better contrast.
-
-        Args:
-            date: Date string containing day information
-
-        Returns:
-            RGB color tuple for the dark variant
-        """
-        day = date.upper()
-
-        # Monday/Lunes/Lundi - Dark Orange
-        if any(d in day for d in ["LUNES", "LUNDI", "MONDAY"]):
-            return (230, 124, 0)  # Dark Orange
-        # Tuesday/Martes/Mardi - Dark Blue
-        elif any(d in day for d in ["MARTES", "MARDI", "TUESDAY"]):
-            return (25, 118, 210)  # Dark Blue
-        # Wednesday/Miércoles/Mercredi - Dark Yellow
-        elif any(d in day for d in ["MIERCOLES", "MERCREDI", "WEDNESDAY"]):
-            return (251, 192, 45)  # Dark Yellow
-        # Thursday/Jueves/Jeudi - Dark Purple
-        elif any(d in day for d in ["JUEVES", "JEUDI", "THURSDAY"]):
-            return (123, 31, 162)  # Dark Purple
-        # Friday/Viernes/Vendredi - Dark Red
-        elif any(d in day for d in ["VIERNES", "VENDREDI", "FRIDAY"]):
-            return (211, 47, 47)  # Dark Red
-        # Saturday/Sábado/Samedi - Dark Green
-        elif any(d in day for d in ["SABADO", "SAMEDI", "SATURDAY"]):
-            return (56, 142, 60)  # Dark Green
-        # Sunday/Domingo/Dimanche - Dark Teal
-        elif any(d in day for d in ["DOMINGO", "DIMANCHE", "SUNDAY"]):
-            return (0, 121, 107)  # Dark Teal
-        # Default - Dark Orange
-        else:
-            return (230, 124, 0)  # Dark Orange
 
     def draw_banner(
         self,

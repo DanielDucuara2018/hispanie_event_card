@@ -10,10 +10,37 @@ from weekly_motivation_card_generator import (
     WEEKLY_MESSAGES,
 )
 from datetime import datetime, timedelta
+from weather_service import WeatherService
 
 BASE_DIR = Path(__file__).parent
 IMAGE_FOLDER = BASE_DIR.joinpath("images")
 INPUT_FOLDER = BASE_DIR.joinpath("input")
+
+# Add your OpenWeatherMap API key here
+WEATHER_API_KEY = (
+    "your_openweathermap_api_key_here"  # Get from https://openweathermap.org/api
+)
+
+# City mapping for weather
+CITY_MAPPING = {"paris": "Paris,FR", "nantes": "Nantes,FR"}
+
+start_date = datetime.now()
+weather_service = (
+    WeatherService(WEATHER_API_KEY)
+    if WEATHER_API_KEY != "your_openweathermap_api_key_here"
+    else None
+)
+
+data_cards = [
+    {
+        "datetime": single_date,
+        "date": f"{single_date.day} {FR_MONTHS[single_date.strftime('%B')].upper()}",
+        "day_name_es": ES_DAYS[single_date.strftime("%A")],
+        "day_name_fr": FR_DAYS[single_date.strftime("%A")],
+        **WEEKLY_MESSAGES[single_date.strftime("%A")],
+    }
+    for single_date in (start_date + timedelta(n) for n in range(8))
+]
 
 # Create images folder if it doesn't exist
 if not IMAGE_FOLDER.exists():
@@ -39,20 +66,17 @@ for i, event in enumerate(events):
                 IMAGE_FOLDER.joinpath(f"output_event_card_{i}_{width}x{height}.jpg"),
             )
 
-start_date = datetime.now()
-data_cards = [
-    {
-        "date": f"{single_date.day} {FR_MONTHS[single_date.strftime('%B')].upper()}",
-        "day_name_es": ES_DAYS[single_date.strftime("%A")],
-        "day_name_fr": FR_DAYS[single_date.strftime("%A")],
-        **WEEKLY_MESSAGES[single_date.strftime("%A")],
-    }
-    for single_date in (start_date + timedelta(n) for n in range(7))
-]
-
+# Weekly motivation cards generation
 generator = WeeklyMotivationCardGenerator(1080, 1920)
 for city in ["paris", "nantes"]:
     for card_data in data_cards:
+        # Add weather data for each city and date
+        if weather_service:
+            weather_data = weather_service.get_weather_for_city(
+                CITY_MAPPING[city], card_data["datetime"]
+            )
+            card_data["weather"] = weather_data
+
         output_path = IMAGE_FOLDER.joinpath(
             f"motivation_card_{city}_{card_data['date']}.png"
         )
