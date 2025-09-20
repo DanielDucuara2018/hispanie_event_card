@@ -28,6 +28,21 @@ FR_MONTHS = {
     "December": "Décembre",
 }
 
+FR_MONTHS_SHORT = {
+    "January": "Janv.",
+    "February": "Févr.",
+    "March": "Mars.",
+    "April": "Avril.",
+    "May": "Mai.",
+    "June": "Juin.",
+    "July": "Juillet.",
+    "August": "Août.",
+    "September": "Sept.",
+    "October": "Oct.",
+    "November": "Nov.",
+    "December": "Déc.",
+}
+
 FR_DAYS = {
     "Monday": "Lundi",
     "Tuesday": "Mardi",
@@ -160,6 +175,7 @@ for city in ["paris", "nantes"]:
 generator = MotivationCardGenerator(1080, 1350)
 for city in ["paris", "nantes"]:
     for card_data in data_cards:
+        single_date = card_data["datetime"]
         card_data["spanish_text"] = (
             f"¿Qué hacer en {city.capitalize()} este {card_data['day_name_es']}?"
         )
@@ -167,6 +183,9 @@ for city in ["paris", "nantes"]:
             f"Quoi faire à {city.capitalize()} ce {card_data['day_name_fr']} ?"
         )
         card_data["emoji"] = "💃"
+        card_data["date"] = (
+            f"{FR_MONTHS_SHORT[single_date.strftime('%B')]}\n  {single_date.day} "
+        )
 
         # Add weather data for each city and date
         if weather_service:

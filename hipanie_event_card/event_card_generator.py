@@ -350,16 +350,20 @@ class EventCardGenerator:
         y_position: int,
         font_type: ImageFont.FreeTypeFont,
         *,
-        split_text: bool = False,
+        x_position: int | None = None,
         section_spacing: int | None = None,
+        split_text: bool = False,
     ) -> int:
         """Add event type/category with emoji to the card."""
         if split_text:
-            return self.split_text(card, text, y_position, font_type)
+            return self.split_text(
+                card, text, y_position, font_type, x_position=x_position
+            )
 
+        x_position = x_position or self.left_margin
         with Pilmoji(card) as pilmoji:
             pilmoji.text(
-                (self.left_margin, y_position),
+                (x_position, y_position),
                 text,
                 font=font_type,
                 fill="black",
@@ -373,6 +377,7 @@ class EventCardGenerator:
         y_position: int,
         font_type: ImageFont.FreeTypeFont,
         *,
+        x_position: int | None = None,
         section_spacing: int | None = None,
     ) -> int:
         """Add wrapped event description to the card."""
@@ -381,10 +386,11 @@ class EventCardGenerator:
 
         lines = self.wrap_text(text, font_type, max_desc_width, draw)
 
+        x_position = x_position or self.left_margin
         with Pilmoji(card) as pilmoji:
             for i, line in enumerate(lines):
                 pilmoji.text(
-                    (self.left_margin, y_position + i * self.line_spacing),
+                    (x_position, y_position + i * self.line_spacing),
                     line,
                     font=font_type,
                     fill="black",
