@@ -1,3 +1,4 @@
+import logging
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from event_card_generator import EventCardGenerator
@@ -5,6 +6,8 @@ from event_card_generator import EventCardGenerator
 BASE_DIR = Path(__file__).parent
 IMAGE_FOLDER = BASE_DIR.joinpath("images")
 INPUT_FOLDER = BASE_DIR.joinpath("input")
+
+logger = logging.getLogger(__name__)
 
 
 class StoryEventCardGenerator(EventCardGenerator):
@@ -123,4 +126,4 @@ class StoryEventCardGenerator(EventCardGenerator):
 
         # Save the card
         card.save(output_path, quality=95)
-        print(f"✅ Saved story card at {output_path}")
+        logger.info(f"✅ Saved story card at {output_path}")

@@ -1,6 +1,9 @@
+import logging
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 from event_card_generator import EventCardGenerator
+
+logger = logging.getLogger(__name__)
 
 
 class MotivationCardGenerator(EventCardGenerator):
@@ -320,4 +323,4 @@ class MotivationCardGenerator(EventCardGenerator):
 
         # Save the card
         card.save(output_path, quality=95)
-        print(f"✅ Saved motivation card at {output_path}")
+        logger.info(f"✅ Saved motivation card at {output_path}")

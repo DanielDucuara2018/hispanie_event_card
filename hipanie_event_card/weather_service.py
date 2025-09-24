@@ -1,6 +1,9 @@
+import logging
 import requests
 from datetime import datetime
 from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class WeatherService:
@@ -35,7 +38,7 @@ class WeatherService:
                 # For future dates, use forecast (up to 5 days)
                 return self._get_forecast_weather(city, date)
         except Exception as e:
-            print(f"Error fetching weather for {city}: {e}")
+            logger.error(f"Error fetching weather for {city}: {e}")
             return None
 
     def _get_current_weather(self, city: str) -> Optional[Dict]:

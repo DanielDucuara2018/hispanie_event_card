@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from story_event_card_generator import StoryEventCardGenerator
 from event_card_generator import EventCardGenerator
@@ -8,6 +9,12 @@ from hipanie_event_card.story_motivation_card_generator import (
 from hipanie_event_card.motivation_card_generator import MotivationCardGenerator
 from datetime import datetime, timedelta
 from weather_service import WeatherService
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent
 IMAGE_FOLDER = BASE_DIR.joinpath("images")
@@ -137,6 +144,7 @@ with INPUT_FOLDER.joinpath("events.json").open("r", encoding="utf-8") as f:
     events = json.load(f)
 
 # Generate cards in different sizes
+logger.info("Starting event card generation...")
 image_sizes = [(1080, 1350), (1080, 1920)]
 for i, event in enumerate(events):
     for width, height in image_sizes:
@@ -153,7 +161,9 @@ for i, event in enumerate(events):
                 IMAGE_FOLDER.joinpath(f"output_event_card_{i}_{width}x{height}.jpg"),
             )
 
+
 # Weekly motivation cards generation
+logger.info("Starting weekly motivation card generation...")
 generator = StoryMotivationCardGenerator(1080, 1920)
 for city in ["paris"]:
     for card_data in data_cards:
@@ -173,6 +183,7 @@ for city in ["paris"]:
 
 
 generator = MotivationCardGenerator(1080, 1350)
+logger.info("Starting standard motivation card generation...")
 for city in ["paris"]:
     for card_data in data_cards:
         single_date = card_data["datetime"]

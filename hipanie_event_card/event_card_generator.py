@@ -1,8 +1,11 @@
+import logging
 import requests
 from pilmoji import Pilmoji
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class EventCardGenerator:
@@ -494,4 +497,4 @@ class EventCardGenerator:
 
         # Save the card
         card.save(output_path, quality=95)
-        print(f"✅ Saved card at {output_path}")
+        logger.info(f"✅ Saved card at {output_path}")
