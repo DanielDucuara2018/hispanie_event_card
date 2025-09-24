@@ -133,7 +133,7 @@ class EventCardGenerator:
             return (33, 150, 243)  # Blue
         # Wednesday/Miércoles/Mercredi - Yellow
         elif any(d in day for d in ["MIERCOLES", "MERCREDI", "WEDNESDAY"]):
-            return (255, 255, 0)  # Yellow
+            return (204, 153, 0)  # Yellow
         # Thursday/Jueves/Jeudi - Purple
         elif any(d in day for d in ["JUEVES", "JEUDI", "THURSDAY"]):
             return (156, 39, 176)  # Purple

@@ -72,17 +72,17 @@ WEEKLY_MESSAGES = {
     },
     "Tuesday": {
         "spanish_text": "Porque hoy es un nuevo día",
-        "french_text": "parce qu'aujourd'hui c'est un nouveau jour",
+        "french_text": "Parce qu'aujourd'hui c'est un nouveau jour",
         "emoji": "🦊",
     },
     "Wednesday": {
-        "spanish_text": "maneras de motivarte entre semana",
+        "spanish_text": "Maneras de motivarte entre semana",
         "french_text": "Façons de vous motiver pendant la semaine",
         "emoji": "🐹",
     },
     "Thursday": {
         "spanish_text": "Mira la agenda de hoy",
-        "french_text": "regarde l'agenda d'aujourd'hui",
+        "french_text": "Regardez l'agenda d'aujourd'hui",
         "emoji": "🐰",
     },
     "Friday": {
@@ -92,7 +92,7 @@ WEEKLY_MESSAGES = {
     },
     "Saturday": {
         "spanish_text": "¿Qué hacer este sábado?",
-        "french_text": "Que faire ce samedi ?",
+        "french_text": "Quoi faire ce samedi ?",
         "emoji": "🐶",
     },
     "Sunday": {
@@ -155,7 +155,7 @@ for i, event in enumerate(events):
 
 # Weekly motivation cards generation
 generator = StoryMotivationCardGenerator(1080, 1920)
-for city in ["paris", "nantes"]:
+for city in ["paris"]:
     for card_data in data_cards:
         # Add weather data for each city and date
         if weather_service:
@@ -173,7 +173,7 @@ for city in ["paris", "nantes"]:
 
 
 generator = MotivationCardGenerator(1080, 1350)
-for city in ["paris", "nantes"]:
+for city in ["paris"]:
     for card_data in data_cards:
         single_date = card_data["datetime"]
         card_data["spanish_text"] = (
