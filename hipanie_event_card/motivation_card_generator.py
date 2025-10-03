@@ -80,9 +80,7 @@ class MotivationCardGenerator(EventCardGenerator):
         )
 
         # Add date text
-        self.add_date_text(
-            card, text_date, self.start_card, logo_width, logo_x / 2, logo_height
-        )
+        self.add_date_text(card, text_date, self.start_card, logo_width, logo_x / 2)
 
         return logo_height
 
@@ -121,7 +119,6 @@ class MotivationCardGenerator(EventCardGenerator):
         logo_y: int,
         logo_width: int,
         logo_x: int,
-        logo_height: int,
     ):
         """
         Add date text to the right of the vertical line.
@@ -132,7 +129,6 @@ class MotivationCardGenerator(EventCardGenerator):
             logo_y: Y position of the logo
             logo_width: Width of the logo
             logo_x: X position of the logo
-            logo_height: Height of the logo
         """
         # Position date to the right of the line
         date_x = logo_x + logo_width + 200  # 100 for line + 100 for spacing
