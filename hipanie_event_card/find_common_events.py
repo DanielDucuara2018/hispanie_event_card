@@ -101,7 +101,7 @@ class EventMerger:
         ]
 
         logger.info(
-            f"Found {len(non_common_events)} non-common events to keep in events_non_detailed.json"
+            f"Found {len(non_common_events)} non-common events to keep in events_non_detailed file"
         )
         return non_common_events
 
@@ -135,9 +135,9 @@ class EventMerger:
         events_detailed = self.load_json_file(events_detailed_file)
 
         logger.info(
-            f"Loaded {len(events_non_detailed)} events from events_non_detailed.json"
+            f"Loaded {len(events_non_detailed)} events from events_non_detailed file"
         )
-        logger.info(f"Loaded {len(events_detailed)} events from events_detailed.json")
+        logger.info(f"Loaded {len(events_detailed)} events from events_detailed file")
 
         return events_non_detailed, events_detailed
 
@@ -151,10 +151,10 @@ class EventMerger:
         detailed_link_map = self.create_link_map(events_detailed)
 
         logger.info(
-            f"Found {len(non_detailed_link_map)} events with valid links in events_non_detailed.json"
+            f"Found {len(non_detailed_link_map)} events with valid links in events_non_detailed file"
         )
         logger.info(
-            f"Found {len(detailed_link_map)} events with valid links in events_detailed.json"
+            f"Found {len(detailed_link_map)} events with valid links in events_detailed file"
         )
 
         return non_detailed_link_map, detailed_link_map
@@ -247,9 +247,9 @@ def main():
     base_dir = Path(__file__).parent
     input_folder = base_dir.joinpath("input")
 
-    events_non_detailed_file = input_folder.joinpath("events_paris.json")
+    events_non_detailed_file = input_folder.joinpath("events_paris_non_detailed.json")
     events_detailed_file = input_folder.joinpath("events_paris_detailed.json")
-    output_file = input_folder.joinpath("events.json")
+    output_file = input_folder.joinpath("events_paris.json")
 
     # Validate input files
     if not validate_input_files(events_non_detailed_file, events_detailed_file):

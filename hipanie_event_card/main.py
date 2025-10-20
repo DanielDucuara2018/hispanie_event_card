@@ -1,5 +1,6 @@
 import json
 import logging
+import argparse
 from pathlib import Path
 from story_event_card_generator import StoryEventCardGenerator
 from event_card_generator import EventCardGenerator
@@ -9,6 +10,7 @@ from hipanie_event_card.story_motivation_card_generator import (
 from hipanie_event_card.motivation_card_generator import MotivationCardGenerator
 from datetime import datetime, timedelta
 from weather_service import WeatherService
+from typing import Any
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -19,6 +21,12 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).parent
 IMAGE_FOLDER = BASE_DIR.joinpath("images")
 INPUT_FOLDER = BASE_DIR.joinpath("input")
+
+# Create images folder if it doesn't exist
+if not IMAGE_FOLDER.exists():
+    IMAGE_FOLDER.mkdir(parents=True, exist_ok=True)
+
+CALCULATION_DATE = datetime.now()
 
 FR_MONTHS = {
     "January": "Janvier",
@@ -109,7 +117,6 @@ WEEKLY_MESSAGES = {
     },
 }
 
-
 # Add your OpenWeatherMap API key here
 WEATHER_API_KEY = (
     "your_openweathermap_api_key_here"  # Get from https://openweathermap.org/api
@@ -118,96 +125,250 @@ WEATHER_API_KEY = (
 # City mapping for weather
 CITY_MAPPING = {"paris": "Paris,FR", "nantes": "Nantes,FR"}
 
-start_date = datetime.now()
-weather_service = (
-    WeatherService(WEATHER_API_KEY)
-    if WEATHER_API_KEY != "your_openweathermap_api_key_here"
-    else None
-)
 
-data_cards = [
-    {
-        "datetime": single_date,
-        "date": f"{single_date.day} {FR_MONTHS[single_date.strftime('%B')].upper()}",
-        "day_name_es": ES_DAYS[single_date.strftime("%A")],
-        "day_name_fr": FR_DAYS[single_date.strftime("%A")],
-        **WEEKLY_MESSAGES[single_date.strftime("%A")],
+def get_next_monday(start_date: datetime) -> tuple[datetime, datetime]:
+    # If start_date is already Monday, use it; otherwise calculate next Monday
+    if start_date.weekday() == 0:  # Monday is 0 in weekday()
+        next_monday = start_date
+    else:
+        days_until_monday = (7 - start_date.weekday()) % 7
+        if days_until_monday == 0:
+            days_until_monday = 7
+        next_monday = start_date + timedelta(days=days_until_monday)
+
+    # Calculate the Sunday of that week (6 days after Monday)
+    next_sunday = next_monday + timedelta(days=6)
+    return next_monday, next_sunday
+
+
+def parse_arguments() -> argparse.Namespace:
+    """Parse command line arguments to determine which sections to run."""
+    parser = argparse.ArgumentParser(
+        description="Generate various types of event and motivation cards",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Available sections:
+  1. event-cards                Generate event cards in different sizes
+  2. day-motivation-cards       Generate daily motivation cards by city
+  3. week-motivation-cards      Generate week motivation cards by city
+
+Examples:
+  python main.py --sections 1 3           # Run only event cards and week motivation cards
+  python main.py --sections event-cards   # Run only event cards
+  python main.py --all                     # Run all sections (default)
+        """,
+    )
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "--sections",
+        nargs="+",
+        help="Specify which sections to run. Use numbers (1-4) or names (event-cards, story-everyday-motivation, standard-everyday-motivation, standard-week-motivation)",
+        default=None,
+    )
+    group.add_argument(
+        "--all",
+        action="store_true",
+        help="Run all sections (default behavior)",
+        default=False,
+    )
+
+    parser.add_argument(
+        "--list-sections", action="store_true", help="List available sections and exit"
+    )
+
+    return parser.parse_args()
+
+
+def normalize_section_names(sections):
+    """Convert section numbers or names to a standardized list."""
+    section_mapping = {
+        "1": "event-cards",
+        "2": "day-motivation-cards",
+        "3": "week-motivation-cards",
+        "event-cards": "event-cards",
+        "day-motivation-cards": "day-motivation-cards",
+        "week-motivation-cards": "week-motivation-cards",
     }
-    for single_date in (start_date + timedelta(n) for n in range(8))
-]
 
-# Create images folder if it doesn't exist
-if not IMAGE_FOLDER.exists():
-    IMAGE_FOLDER.mkdir(parents=True, exist_ok=True)
-
-with INPUT_FOLDER.joinpath("events.json").open("r", encoding="utf-8") as f:
-    events = json.load(f)
-
-# Generate cards in different sizes
-logger.info("Starting event card generation...")
-image_sizes = [(1080, 1350), (1080, 1920)]
-for i, event in enumerate(events):
-    for width, height in image_sizes:
-        if height >= 1900:  # Story format
-            generator = StoryEventCardGenerator(width, height)
-            generator.create_event_card(
-                event,
-                IMAGE_FOLDER.joinpath(f"story_event_card_{i}_{width}x{height}.jpg"),
-            )
-        else:  # Standard format
-            generator = EventCardGenerator(width, height)
-            generator.create_event_card(
-                event,
-                IMAGE_FOLDER.joinpath(f"output_event_card_{i}_{width}x{height}.jpg"),
+    normalized = []
+    for section in sections:
+        if section in section_mapping:
+            normalized.append(section_mapping[section])
+        else:
+            logger.warning(
+                f"Unknown section: {section}. Available sections: {list(section_mapping.keys())}"
             )
 
+    return normalized
 
-# Weekly motivation cards generation
-logger.info("Starting weekly motivation card generation...")
-generator = StoryMotivationCardGenerator(1080, 1920)
-for city in ["paris"]:
-    for card_data in data_cards:
+
+def should_run_section(section_name: str, sections_to_run: list[str] | None) -> bool:
+    """Check if a specific section should be run based on user input."""
+    return sections_to_run is None or section_name in sections_to_run
+
+
+def main():
+    """Main function to run the card generation based on command line arguments."""
+    # Parse command line arguments
+    args = parse_arguments()
+
+    # Handle list sections request
+    if args.list_sections:
+        print("Available sections:")
+        print("  1. event-cards          Generate event cards in different sizes")
+        print("  2. day-motivation-cards       Generate daily motivation cards by city")
+        print("  3. week-motivation-cards      Generate week motivation cards by city")
+        return
+
+    # Determine which sections to run
+    sections_to_run = None
+    if args.sections:
+        sections_to_run = normalize_section_names(args.sections)
+        logger.info(f"Running sections: {sections_to_run}")
+    elif not args.all:
+        logger.info("Running all sections (use --sections to run specific ones)")
+
+    weather_service = (
+        WeatherService(WEATHER_API_KEY)
+        if WEATHER_API_KEY != "your_openweathermap_api_key_here"
+        else None
+    )
+
+    # Event Cards Generation
+    if should_run_section("event-cards", sections_to_run):
+        generate_event_cards(["paris", "nantes"])
+
+    # Day Motivation Cards Generation
+    if should_run_section("day-motivation-cards", sections_to_run):
+        next_monday, _ = get_next_monday(CALCULATION_DATE)
+        data_cards = [
+            {
+                "datetime": single_date,
+                "date": f"{single_date.day} {FR_MONTHS[single_date.strftime('%B')].upper()}",
+                "day_name_es": ES_DAYS[single_date.strftime("%A")],
+                "day_name_fr": FR_DAYS[single_date.strftime("%A")],
+                **WEEKLY_MESSAGES[single_date.strftime("%A")],
+            }
+            for single_date in (next_monday + timedelta(n) for n in range(7))
+        ]
+        generate_day_motivation_cards(["paris"], data_cards, weather_service)
+
+    # Week Motivation Cards Generation
+    if should_run_section("week-motivation-cards", sections_to_run):
+        generate_week_motivation_cards(["nantes"], CALCULATION_DATE, weather_service)
+
+
+def generate_event_cards(cities: list[str]):
+    logger.info("Starting event card generation...")
+    image_sizes = [(1080, 1350), (1080, 1920)]
+    for city in cities:
+        event_file_path = INPUT_FOLDER.joinpath(f"events_{city}.json")
+        if not event_file_path.exists():
+            logger.warning(f"Event file does not exist: {event_file_path}")
+            continue
+
+        with event_file_path.open("r", encoding="utf-8") as f:
+            events = json.load(f)
+
+        for width, height in image_sizes:
+            if height >= 1900:  # Story format
+                generator = StoryEventCardGenerator(width, height)
+                prefix = "story"
+            else:  # Standard format
+                generator = EventCardGenerator(width, height)
+                prefix = "standard"
+
+            for i, event in enumerate(events):
+                generator.create_event_card(
+                    event,
+                    IMAGE_FOLDER.joinpath(
+                        f"{prefix}_event_card_{city}_{i}_{width}x{height}.jpg"
+                    ),
+                )
+
+    logger.info("Event card generation completed!")
+
+
+def generate_day_motivation_cards(
+    cities: list[str],
+    data_cards: dict[str, Any],
+    weather_service: WeatherService | None = None,
+):
+    logger.info("Starting weekly story motivation card generation for big cities...")
+    image_sizes = [(1080, 1920), (1080, 1350)]
+    for city in cities:
+        for width, height in image_sizes:
+            if height >= 1900:  # Story format
+                generator = StoryMotivationCardGenerator(width, height)
+                prefix = "story"
+            else:  # Standard format
+                generator = MotivationCardGenerator(width, height)
+                prefix = "standard"
+
+            for card_data in data_cards:
+                # Add weather data for each city and date
+                if weather_service:
+                    weather_data = weather_service.get_weather_for_city(
+                        CITY_MAPPING[city], card_data["datetime"]
+                    )
+                    card_data["weather"] = weather_data
+
+                if height == 1350:
+                    single_date = card_data["datetime"]
+                    card_data["spanish_text"] = (
+                        f"¿Qué hacer en {city.capitalize()} este {card_data['day_name_es']}?"
+                    )
+                    card_data["french_text"] = (
+                        f"Quoi faire à {city.capitalize()} ce {card_data['day_name_fr']} ?"
+                    )
+                    card_data["emoji"] = "💃"
+                    card_data["date"] = (
+                        f"{FR_MONTHS_SHORT[single_date.strftime('%B')]}\n  {single_date.day} "
+                    )
+
+                output_path = IMAGE_FOLDER.joinpath(
+                    f"{prefix}_motivation_card_{city}_{generator.card_width}_{generator.card_height}_{card_data['date']}.png"
+                )
+                generator.create_motivation_card(
+                    card_data, output_path, INPUT_FOLDER.joinpath(f"{city}_logo.jpeg")
+                )
+    logger.info("Weekly motivation cards generation completed!")
+
+
+def generate_week_motivation_cards(
+    cities: list[str], calculation_date: datetime, weather_service: WeatherService
+):
+    logger.info(
+        "Starting weekly standard motivation card generation for small cities..."
+    )
+    generator = MotivationCardGenerator(1080, 1350)
+    next_monday, next_sunday = get_next_monday(calculation_date)
+    for city in cities:
+        card_data = {
+            "date": f"{FR_MONTHS[next_monday.strftime('%B')].upper()} \n {next_monday.day} - {next_sunday.day}",
+            "spanish_text": f"¿Qué hacer en {city.capitalize()} esta semana ?",
+            "french_text": f"Quoi faire à {city.capitalize()} cette semaine ?",
+            "day_name_fr": "Semaine",
+            "day_name_es": "Semana",
+            "emoji": "💃",
+            "datetime": next_monday,  # Add datetime for weather service
+        }
         # Add weather data for each city and date
         if weather_service:
             weather_data = weather_service.get_weather_for_city(
-                CITY_MAPPING[city], card_data["datetime"]
+                CITY_MAPPING[city], next_monday
             )
             card_data["weather"] = weather_data
 
         output_path = IMAGE_FOLDER.joinpath(
-            f"motivation_card_{city}_{generator.card_width}_{generator.card_height}_{card_data['date']}.png"
+            f"standard_motivation_card_{city}_{generator.card_width}_{generator.card_height}_{card_data['date']}.png"
         )
         generator.create_motivation_card(
-            card_data, output_path, INPUT_FOLDER.joinpath(f"{city}_logo.png")
+            card_data, output_path, INPUT_FOLDER.joinpath(f"{city}_logo.jpeg")
         )
+    logger.info("Standard motivation cards for small cities generation completed!")
 
 
-generator = MotivationCardGenerator(1080, 1350)
-logger.info("Starting standard motivation card generation...")
-for city in ["paris"]:
-    for card_data in data_cards:
-        single_date = card_data["datetime"]
-        card_data["spanish_text"] = (
-            f"¿Qué hacer en {city.capitalize()} este {card_data['day_name_es']}?"
-        )
-        card_data["french_text"] = (
-            f"Quoi faire à {city.capitalize()} ce {card_data['day_name_fr']} ?"
-        )
-        card_data["emoji"] = "💃"
-        card_data["date"] = (
-            f"{FR_MONTHS_SHORT[single_date.strftime('%B')]}\n  {single_date.day} "
-        )
-
-        # Add weather data for each city and date
-        if weather_service:
-            weather_data = weather_service.get_weather_for_city(
-                CITY_MAPPING[city], card_data["datetime"]
-            )
-            card_data["weather"] = weather_data
-
-        output_path = IMAGE_FOLDER.joinpath(
-            f"motivation_card_{city}_{generator.card_width}_{generator.card_height}_{card_data['date']}.png"
-        )
-        generator.create_motivation_card(
-            card_data, output_path, INPUT_FOLDER.joinpath(f"{city}_logo.png")
-        )
+if __name__ == "__main__":
+    main()
