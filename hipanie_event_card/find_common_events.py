@@ -239,31 +239,3 @@ def print_summary(
     logger.info(
         "\nFields overwritten from source: title, location, description_short, description_long, cost, type"
     )
-
-
-def main():
-    """Main function to run the event merging process."""
-    # Define file paths
-    base_dir = Path(__file__).parent
-    input_folder = base_dir.joinpath("input")
-
-    events_non_detailed_file = input_folder.joinpath("events_paris_non_detailed.json")
-    events_detailed_file = input_folder.joinpath("events_paris_detailed.json")
-    output_file = input_folder.joinpath("events_paris.json")
-
-    # Validate input files
-    if not validate_input_files(events_non_detailed_file, events_detailed_file):
-        return
-
-    # Process the files
-    merger = EventMerger()
-    merger.find_and_merge_common_events(
-        events_non_detailed_file, events_detailed_file, output_file
-    )
-
-    # Print summary
-    print_summary(events_non_detailed_file, events_detailed_file, output_file)
-
-
-if __name__ == "__main__":
-    main()

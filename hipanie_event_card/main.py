@@ -8,6 +8,7 @@ from hipanie_event_card.story_motivation_card_generator import (
     StoryMotivationCardGenerator,
 )
 from hipanie_event_card.motivation_card_generator import MotivationCardGenerator
+from find_common_events import EventMerger
 from datetime import datetime, timedelta
 from weather_service import WeatherService
 from typing import Any
@@ -148,13 +149,15 @@ def parse_arguments() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Available sections:
-  1. event-cards                Generate event cards in different sizes
-  2. day-motivation-cards       Generate daily motivation cards by city
-  3. week-motivation-cards      Generate week motivation cards by city
+  1. find-common-events         Find and merge common events between detailed and non-detailed files
+  2. event-cards                Generate event cards in different sizes
+  3. day-motivation-cards       Generate daily motivation cards by city
+  4. week-motivation-cards      Generate week motivation cards by city
 
 Examples:
-  python main.py --sections 1 3           # Run only event cards and week motivation cards
-  python main.py --sections event-cards   # Run only event cards
+  python main.py --sections 1 3           # Run find common events and day motivation cards
+  python main.py --sections find-common-events   # Run only find common events
+  python main.py --sections 1             # Run only find common events
   python main.py --all                     # Run all sections (default)
         """,
     )
@@ -163,7 +166,7 @@ Examples:
     group.add_argument(
         "--sections",
         nargs="+",
-        help="Specify which sections to run. Use numbers (1-4) or names (event-cards, story-everyday-motivation, standard-everyday-motivation, standard-week-motivation)",
+        help="Specify which sections to run. Use numbers (1-4) or names (find-common-events, event-cards, day-motivation-cards, week-motivation-cards)",
         default=None,
     )
     group.add_argument(
@@ -183,9 +186,11 @@ Examples:
 def normalize_section_names(sections):
     """Convert section numbers or names to a standardized list."""
     section_mapping = {
-        "1": "event-cards",
-        "2": "day-motivation-cards",
-        "3": "week-motivation-cards",
+        "1": "find-common-events",
+        "2": "event-cards",
+        "3": "day-motivation-cards",
+        "4": "week-motivation-cards",
+        "find-common-events": "find-common-events",
         "event-cards": "event-cards",
         "day-motivation-cards": "day-motivation-cards",
         "week-motivation-cards": "week-motivation-cards",
@@ -216,9 +221,12 @@ def main():
     # Handle list sections request
     if args.list_sections:
         print("Available sections:")
-        print("  1. event-cards          Generate event cards in different sizes")
-        print("  2. day-motivation-cards       Generate daily motivation cards by city")
-        print("  3. week-motivation-cards      Generate week motivation cards by city")
+        print(
+            "  1. find-common-events         Find and merge common events between detailed and non-detailed files"
+        )
+        print("  2. event-cards                Generate event cards in different sizes")
+        print("  3. day-motivation-cards       Generate daily motivation cards by city")
+        print("  4. week-motivation-cards      Generate week motivation cards by city")
         return
 
     # Determine which sections to run
@@ -234,6 +242,10 @@ def main():
         if WEATHER_API_KEY != "your_openweathermap_api_key_here"
         else None
     )
+
+    # Find Common Events
+    if should_run_section("find-common-events", sections_to_run):
+        run_find_common_events(["paris"])
 
     # Event Cards Generation
     if should_run_section("event-cards", sections_to_run):
@@ -368,6 +380,40 @@ def generate_week_motivation_cards(
             card_data, output_path, INPUT_FOLDER.joinpath(f"{city}_logo.jpeg")
         )
     logger.info("Standard motivation cards for small cities generation completed!")
+
+
+def run_find_common_events(cities: list[str]):
+    """Run the find common events process for available cities."""
+    logger.info("Starting find common events process...")
+
+    merger = EventMerger()
+
+    for city in cities:
+        events_non_detailed_file = INPUT_FOLDER.joinpath(
+            f"events_{city}_non_detailed.json"
+        )
+        events_detailed_file = INPUT_FOLDER.joinpath(f"events_{city}_detailed.json")
+        output_file = INPUT_FOLDER.joinpath(f"events_{city}.json")
+
+        # Check if both required files exist
+        if not events_non_detailed_file.exists():
+            logger.warning(
+                f"Non-detailed events file does not exist: {events_non_detailed_file}"
+            )
+            continue
+
+        if not events_detailed_file.exists():
+            logger.warning(
+                f"Detailed events file does not exist: {events_detailed_file}"
+            )
+            continue
+
+        logger.info(f"Processing events for {city}...")
+        merger.find_and_merge_common_events(
+            events_non_detailed_file, events_detailed_file, output_file
+        )
+
+    logger.info("Find common events process completed!")
 
 
 if __name__ == "__main__":
